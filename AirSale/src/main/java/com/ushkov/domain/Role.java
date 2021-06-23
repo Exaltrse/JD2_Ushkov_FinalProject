@@ -1,0 +1,33 @@
+package com.ushkov.domain;
+
+import com.google.gson.JsonElement;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "roles")
+@Embeddable
+@Data
+@NoArgsConstructor
+public class Role {
+    @Id
+    @Column(name = "roles_id")
+    @SequenceGenerator(name = "roleSequenceGenerator", sequenceName = "roles_roles_id_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "roleSequenceGenerator")
+    private short id;
+    @Column(name = "role_name", length = 20, nullable = false, unique = true)
+    private String name;
+    //TODO: Think about valuable permissions and create class
+    @Column(name = "permissions")
+    private JsonElement permissions;
+
+}
