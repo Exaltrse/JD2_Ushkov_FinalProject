@@ -22,7 +22,7 @@ public class Country {
     @Column(name = "country_id")
     @SequenceGenerator(name = "countrySequenceGenerator", sequenceName = "country_country_id_seq")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "countrySequenceGenerator")
-    private int id;
+    private short id;
     @Column(name = "country_name", length = 150, nullable = false, unique = true)
     private String name;
 

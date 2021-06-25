@@ -2,7 +2,6 @@ package com.ushkov.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
@@ -23,7 +22,7 @@ public class Ticket {
     @Column(name = "ticket_id")
     @SequenceGenerator(name = "ticketSequenceGenerator", sequenceName = "ticket_ticket_id_seq")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ticketSequenceGenerator")
-    private long ticketId;
+    private long id;
     @Column(name = "passport", nullable = false)
     private Passport passport;
     @Column(name = "current_flight", nullable = false)

@@ -23,7 +23,7 @@ public class Passenger {
     @Column(name = "passenger_id")
     @SequenceGenerator(name = "passengerSequenceGenerator", sequenceName = "passanger_passanger_id_seq")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "passengerSequenceGenerator")
-    private long passengerId;
+    private long id;
     @Column(name = "first_name", length = 100, nullable = false)
     private String firstName;
     @Column(name = "last_name", length = 100, nullable = false)

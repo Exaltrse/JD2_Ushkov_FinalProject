@@ -23,7 +23,7 @@ public class Airline {
     @Column(name = "airline_id")
     @SequenceGenerator(name = "airlineSequenceGenerator", sequenceName = "Airline_airline_id_seq")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "airlineSequenceGenerator")
-    private short id;
+    private Short id;
     @Column(name = "airline_name", length = 100, nullable = false, unique = true)
     private String name;
     @Column(name = "airline_short_name", length = 3, nullable = false, unique = true)

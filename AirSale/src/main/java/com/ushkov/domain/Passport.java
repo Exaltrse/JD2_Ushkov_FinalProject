@@ -25,7 +25,7 @@ public class Passport {
     @SequenceGenerator(name = "passportSequence", sequenceName = "passport_passport_id_seq")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "passportSequence")
     @Column(name = "passport_id")
-    private int id;
+    private long id;
     @Column(name = "first_name_latin", length = 100, nullable = false)
     private String firstNameLatin;
     @Column(name = "last_name_latin", length = 100, nullable = false)
