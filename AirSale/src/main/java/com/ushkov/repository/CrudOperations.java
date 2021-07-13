@@ -1,6 +1,5 @@
 package com.ushkov.repository;
 
-import com.ushkov.domain.Airline;
 import org.hibernate.Session;
 
 import javax.persistence.criteria.CriteriaBuilder;

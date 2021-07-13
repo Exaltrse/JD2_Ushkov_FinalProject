@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -19,15 +18,12 @@ import javax.persistence.Table;
 public class UserPassenger {
     @Id
     @Column(name = "user_passenger")
-    @SequenceGenerator(name = "userPassengerSequenceGenerator", sequenceName = "user_passenger_user_passenger_seq")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "userPassengerSequenceGenerator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     @Column(name = "user", nullable = false)
-    @Embedded
-    private User user;
+    private int user;
     @Column(name = "passenger", nullable = false)
-    @Embedded
-    private Passenger passenger;
+    private long passenger;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
 }

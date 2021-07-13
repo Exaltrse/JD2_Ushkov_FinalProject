@@ -1,8 +1,8 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.repository.imlp.AirlineRepository;
+import com.ushkov.domain.AirlinePlane;
+import com.ushkov.repository.imlp.AirlinePlaneRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -21,36 +21,36 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Api(tags = "Airline", value="The Airline API")
+@Api(tags = "Airline-Plane", value="The Airline-Plane API")
 @RestController
-@RequestMapping("/airline")
+@RequestMapping("/airline-plane")
 @RequiredArgsConstructor
-public class AirlineController {
+public class AirlinePlaneController {
 
-    private final AirlineRepository airlineRepository;
+    private final AirlinePlaneRepository airlinePlaneRepository;
 
-    @ApiOperation(  value = "Find all Airlines entries from DB.",
-                    notes = "Find all Airlines entries from DB.",
-                    httpMethod = "GET")
+    @ApiOperation(  value = "Find all AirlinePlane`s entries from DB.",
+            notes = "Find all AirlinePlane`s entries from DB.",
+            httpMethod = "GET")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=Airline.class,
-                    responseContainer="List")
+                    response = AirlinePlane.class,
+                    responseContainer = "List")
     })
     @GetMapping
-    public List<Airline> findAll() {
-        return airlineRepository.findAll();
+    public List<AirlinePlane> findAll() {
+        return airlinePlaneRepository.findAll();
     }
 
-    @ApiOperation(  value="Find Airline entry from DB by ID.",
-                    notes = "Use ID param of entity for searching of entry in DB.",
-                    httpMethod="GET")
+    @ApiOperation(  value="Find AirlinePlane entry from DB by ID.",
+            notes = "Use ID param of entity for searching of entry in DB.",
+            httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "id",
-                    value = "Id of airline entry.",
+                    value = "Id of airline/plane entry.",
                     required = true,
                     dataType = "string",
                     paramType = "query")
@@ -59,15 +59,15 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = Airline.class)
+                    response = AirlinePlane.class)
     })
     @GetMapping("/id")
-    public Airline findOne(@RequestParam("id") Short id) {
-        return airlineRepository.findOne(id);
+    public AirlinePlane findOne(@RequestParam("id") Long id) {
+        return airlinePlaneRepository.findOne(id);
     }
 
     @ApiOperation(  value = "Find [limit] entries from DB with [offset].",
-                    httpMethod="GET")
+            httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "limit",
@@ -86,66 +86,67 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.",
-                    response = Airline.class,
+                    response = AirlinePlane.class,
                     responseContainer = "List")
     })
     @GetMapping("/limitoffset")
-    public List<Airline> findLimitOffset(@RequestParam("limit") Short limit, @RequestParam("offset") Short offset) {
-        return airlineRepository.findLimitOffset(limit, offset);
+    public List<AirlinePlane> findLimitOffset(@RequestParam("limit") Long limit,
+                                              @RequestParam("offset") Long offset) {
+        return airlinePlaneRepository.findLimitOffset(limit, offset);
     }
 
-    @ApiOperation(  value = "Save list of Airline`s entities to DB",
-                    httpMethod = "POST")
+    @ApiOperation(  value = "Save list of AirlinePlane`s entities to DB",
+            httpMethod = "POST")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities saved successfully.",
-                    response = Airline.class,
+                    response = AirlinePlane.class,
                     responseContainer = "List")
     })
     @PostMapping("/postall")
-    public List<Airline> saveAll(
+    public List<AirlinePlane> saveAll(
             @ApiParam(
                     name = "entities",
-                    value = "List of Airline`s entities for update",
+                    value = "List of AirlinePlane`s entities for update",
                     required = true)
-            @RequestBody List<Airline> entities) {
-        return airlineRepository.saveAll(entities);
+            @RequestBody List<AirlinePlane> entities) {
+        return airlinePlaneRepository.saveAll(entities);
     }
 
-    @ApiOperation(  value = "Save one Airline`s entity to DB",
-                    httpMethod = "POST")
+    @ApiOperation(  value = "Save one AirlinePlane`s entity to DB",
+            httpMethod = "POST")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.",
-                    response = Airline.class)
+                    response = AirlinePlane.class)
     })
     @PostMapping("/post")
-    public Airline saveOne(
+    public AirlinePlane saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody Airline entity) {
-        return airlineRepository.saveOne(entity);
+            @RequestBody AirlinePlane entity) {
+        return airlinePlaneRepository.saveOne(entity);
     }
 
-    @ApiOperation(  value = "Update Airline`s entity in DB.",
-                    httpMethod = "PUT")
+    @ApiOperation(  value = "Update AirlinePlane`s entity in DB.",
+            httpMethod = "PUT")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = Airline.class)
+                    response = AirlinePlane.class)
     })
     @PutMapping("/put")
-    public Airline updateOne(
+    public AirlinePlane updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody Airline entity) {
-        return airlineRepository.updateOne(entity);
+            @RequestBody AirlinePlane entity) {
+        return airlinePlaneRepository.updateOne(entity);
     }
 }

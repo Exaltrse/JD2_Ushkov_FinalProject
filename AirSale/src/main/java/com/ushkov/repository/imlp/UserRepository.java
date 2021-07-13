@@ -74,4 +74,6 @@ public class UserRepository implements CrudOperations<Integer, User> {
             return findOne(entity.getId());
         }
     }
+
+
 }

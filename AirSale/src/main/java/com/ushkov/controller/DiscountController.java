@@ -1,8 +1,8 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.repository.imlp.AirlineRepository;
+import com.ushkov.domain.Discount;
+import com.ushkov.repository.imlp.DiscountRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -21,36 +21,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Api(tags = "Airline", value="The Airline API")
+@Api(tags = "Discount", value="The Discount API")
 @RestController
-@RequestMapping("/airline")
+@RequestMapping("/discount")
 @RequiredArgsConstructor
-public class AirlineController {
+public class DiscountController {
 
-    private final AirlineRepository airlineRepository;
+    private final DiscountRepository repository;
 
-    @ApiOperation(  value = "Find all Airlines entries from DB.",
-                    notes = "Find all Airlines entries from DB.",
-                    httpMethod = "GET")
+    @ApiOperation(  value = "Find all Discount`s entries from DB.",
+            httpMethod = "GET")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=Airline.class,
+                    response = Discount.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<Airline> findAll() {
-        return airlineRepository.findAll();
+    public List<Discount> findAll() {
+        return repository.findAll();
     }
 
-    @ApiOperation(  value="Find Airline entry from DB by ID.",
-                    notes = "Use ID param of entity for searching of entry in DB.",
-                    httpMethod="GET")
+    @ApiOperation(  value="Find Discount`s entry from DB by ID.",
+            notes = "Use ID param of entity for searching of entry in DB.",
+            httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "id",
-                    value = "Id of airline entry.",
+                    value = "Id of Discount`s entry.",
                     required = true,
                     dataType = "string",
                     paramType = "query")
@@ -59,15 +58,15 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = Airline.class)
+                    response = Discount.class)
     })
     @GetMapping("/id")
-    public Airline findOne(@RequestParam("id") Short id) {
-        return airlineRepository.findOne(id);
+    public Discount findOne(@RequestParam("id") Short id) {
+        return repository.findOne(id);
     }
 
     @ApiOperation(  value = "Find [limit] entries from DB with [offset].",
-                    httpMethod="GET")
+            httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "limit",
@@ -86,66 +85,67 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.",
-                    response = Airline.class,
+                    response = Discount.class,
                     responseContainer = "List")
     })
     @GetMapping("/limitoffset")
-    public List<Airline> findLimitOffset(@RequestParam("limit") Short limit, @RequestParam("offset") Short offset) {
-        return airlineRepository.findLimitOffset(limit, offset);
+    public List<Discount> findLimitOffset(@RequestParam("limit") Short limit,
+                                          @RequestParam("offset") Short offset) {
+        return repository.findLimitOffset(limit, offset);
     }
 
-    @ApiOperation(  value = "Save list of Airline`s entities to DB",
-                    httpMethod = "POST")
+    @ApiOperation(  value = "Save list of Discount`s entities to DB",
+            httpMethod = "POST")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities saved successfully.",
-                    response = Airline.class,
+                    response = Discount.class,
                     responseContainer = "List")
     })
     @PostMapping("/postall")
-    public List<Airline> saveAll(
+    public List<Discount> saveAll(
             @ApiParam(
                     name = "entities",
-                    value = "List of Airline`s entities for update",
+                    value = "List of Discount`s entities for update",
                     required = true)
-            @RequestBody List<Airline> entities) {
-        return airlineRepository.saveAll(entities);
+            @RequestBody List<Discount> entities) {
+        return repository.saveAll(entities);
     }
 
-    @ApiOperation(  value = "Save one Airline`s entity to DB",
-                    httpMethod = "POST")
+    @ApiOperation(  value = "Save one Discount`s entity to DB",
+            httpMethod = "POST")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.",
-                    response = Airline.class)
+                    response = Discount.class)
     })
     @PostMapping("/post")
-    public Airline saveOne(
+    public Discount saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody Airline entity) {
-        return airlineRepository.saveOne(entity);
+            @RequestBody Discount entity) {
+        return repository.saveOne(entity);
     }
 
-    @ApiOperation(  value = "Update Airline`s entity in DB.",
-                    httpMethod = "PUT")
+    @ApiOperation(  value = "Update Discount`s entity in DB.",
+            httpMethod = "PUT")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = Airline.class)
+                    response = Discount.class)
     })
     @PutMapping("/put")
-    public Airline updateOne(
+    public Discount updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody Airline entity) {
-        return airlineRepository.updateOne(entity);
+            @RequestBody Discount entity) {
+        return repository.updateOne(entity);
     }
 }
