@@ -54,7 +54,7 @@ public class CountryRepository implements CrudOperations<Short, Country> {
     public List<Country> saveAll(List<Country> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Country> resultOfSavingCountryEntitiesList = entities.stream().map(e->e=(Country) session.save(e)).collect(Collectors.toList());
+            List<Country> resultOfSavingCountryEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingCountryEntitiesList;
         }
@@ -63,7 +63,7 @@ public class CountryRepository implements CrudOperations<Short, Country> {
     @Override
     public Country saveOne(Country entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Country) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

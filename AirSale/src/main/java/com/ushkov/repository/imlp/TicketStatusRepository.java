@@ -54,7 +54,7 @@ public class TicketStatusRepository implements CrudOperations<Short, TicketStatu
     public List<TicketStatus> saveAll(List<TicketStatus> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<TicketStatus> resultOfSavingTicketStatusEntitiesList = entities.stream().map(e->e=(TicketStatus) session.save(e)).collect(Collectors.toList());
+            List<TicketStatus> resultOfSavingTicketStatusEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingTicketStatusEntitiesList;
         }
@@ -63,7 +63,7 @@ public class TicketStatusRepository implements CrudOperations<Short, TicketStatu
     @Override
     public TicketStatus saveOne(TicketStatus entity) {
         try(Session session = sessionFactory.openSession()){
-            return (TicketStatus) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

@@ -54,7 +54,7 @@ public class CurrentFlightRepository implements CrudOperations<Long, CurrentFlig
     public List<CurrentFlight> saveAll(List<CurrentFlight> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<CurrentFlight> resultOfSavingCurrentFlightEntitiesList = entities.stream().map(e->e=(CurrentFlight) session.save(e)).collect(Collectors.toList());
+            List<CurrentFlight> resultOfSavingCurrentFlightEntitiesList = entities.stream().map(e->e=findOne((Long) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingCurrentFlightEntitiesList;
         }
@@ -63,7 +63,7 @@ public class CurrentFlightRepository implements CrudOperations<Long, CurrentFlig
     @Override
     public CurrentFlight saveOne(CurrentFlight entity) {
         try(Session session = sessionFactory.openSession()){
-            return (CurrentFlight) session.save(entity);
+            return findOne((Long) session.save(entity));
         }
     }
 

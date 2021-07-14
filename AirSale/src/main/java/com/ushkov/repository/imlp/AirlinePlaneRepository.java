@@ -54,7 +54,7 @@ public class AirlinePlaneRepository implements CrudOperations<Long, AirlinePlane
     public List<AirlinePlane> saveAll(List<AirlinePlane> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<AirlinePlane> resultOfSavingAirlinePlaneEntitiesList = entities.stream().map(e->e=(AirlinePlane) session.save(e)).collect(Collectors.toList());
+            List<AirlinePlane> resultOfSavingAirlinePlaneEntitiesList = entities.stream().map(e->e = findOne((Long) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingAirlinePlaneEntitiesList;
         }
@@ -63,7 +63,7 @@ public class AirlinePlaneRepository implements CrudOperations<Long, AirlinePlane
     @Override
     public AirlinePlane saveOne(AirlinePlane entity) {
         try(Session session = sessionFactory.openSession()){
-            return (AirlinePlane) session.save(entity);
+            return findOne((Long) session.save(entity));
         }
     }
 

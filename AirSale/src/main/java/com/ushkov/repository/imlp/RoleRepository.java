@@ -54,7 +54,7 @@ public class RoleRepository implements CrudOperations<Short, Role> {
     public List<Role> saveAll(List<Role> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Role> resultOfSavingRoleEntitiesList = entities.stream().map(e->e=(Role) session.save(e)).collect(Collectors.toList());
+            List<Role> resultOfSavingRoleEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingRoleEntitiesList;
         }
@@ -63,7 +63,7 @@ public class RoleRepository implements CrudOperations<Short, Role> {
     @Override
     public Role saveOne(Role entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Role) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

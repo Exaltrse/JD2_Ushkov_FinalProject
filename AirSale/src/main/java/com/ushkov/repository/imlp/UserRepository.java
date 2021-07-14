@@ -54,7 +54,7 @@ public class UserRepository implements CrudOperations<Integer, User> {
     public List<User> saveAll(List<User> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<User> resultOfSavingUserEntitiesList = entities.stream().map(e->e=(User) session.save(e)).collect(Collectors.toList());
+            List<User> resultOfSavingUserEntitiesList = entities.stream().map(e->e=findOne((Integer) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingUserEntitiesList;
         }
@@ -63,7 +63,7 @@ public class UserRepository implements CrudOperations<Integer, User> {
     @Override
     public User saveOne(User entity) {
         try(Session session = sessionFactory.openSession()){
-            return (User) session.save(entity);
+            return findOne((Integer) session.save(entity));
         }
     }
 

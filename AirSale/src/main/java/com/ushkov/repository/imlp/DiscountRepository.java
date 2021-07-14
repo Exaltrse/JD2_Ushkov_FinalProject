@@ -54,7 +54,7 @@ public class DiscountRepository implements CrudOperations<Short, Discount> {
     public List<Discount> saveAll(List<Discount> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Discount> resultOfSavingDiscountEntitiesList = entities.stream().map(e->e=(Discount) session.save(e)).collect(Collectors.toList());
+            List<Discount> resultOfSavingDiscountEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingDiscountEntitiesList;
         }
@@ -63,7 +63,7 @@ public class DiscountRepository implements CrudOperations<Short, Discount> {
     @Override
     public Discount saveOne(Discount entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Discount) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

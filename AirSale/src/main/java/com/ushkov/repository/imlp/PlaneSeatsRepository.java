@@ -54,7 +54,7 @@ public class PlaneSeatsRepository implements CrudOperations<Integer, PlaneSeats>
     public List<PlaneSeats> saveAll(List<PlaneSeats> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<PlaneSeats> resultOfSavingPlaneSeatsEntitiesList = entities.stream().map(e->e=(PlaneSeats) session.save(e)).collect(Collectors.toList());
+            List<PlaneSeats> resultOfSavingPlaneSeatsEntitiesList = entities.stream().map(e->e=findOne((Integer) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingPlaneSeatsEntitiesList;
         }
@@ -63,7 +63,7 @@ public class PlaneSeatsRepository implements CrudOperations<Integer, PlaneSeats>
     @Override
     public PlaneSeats saveOne(PlaneSeats entity) {
         try(Session session = sessionFactory.openSession()){
-            return (PlaneSeats) session.save(entity);
+            return findOne((Integer) session.save(entity));
         }
     }
 

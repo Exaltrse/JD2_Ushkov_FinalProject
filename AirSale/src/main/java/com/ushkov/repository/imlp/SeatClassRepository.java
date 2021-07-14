@@ -54,7 +54,7 @@ public class SeatClassRepository implements CrudOperations<Short, SeatClass> {
     public List<SeatClass> saveAll(List<SeatClass> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<SeatClass> resultOfSavingSeatClassEntitiesList = entities.stream().map(e->e=(SeatClass) session.save(e)).collect(Collectors.toList());
+            List<SeatClass> resultOfSavingSeatClassEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingSeatClassEntitiesList;
         }
@@ -63,7 +63,7 @@ public class SeatClassRepository implements CrudOperations<Short, SeatClass> {
     @Override
     public SeatClass saveOne(SeatClass entity) {
         try(Session session = sessionFactory.openSession()){
-            return (SeatClass) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

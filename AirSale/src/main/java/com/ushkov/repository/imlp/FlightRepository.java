@@ -55,7 +55,7 @@ public class FlightRepository implements CrudOperations<Integer, Flight> {
     public List<Flight> saveAll(List<Flight> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Flight> resultOfSavingFlightEntitiesList = entities.stream().map(e->e=(Flight) session.save(e)).collect(Collectors.toList());
+            List<Flight> resultOfSavingFlightEntitiesList = entities.stream().map(e->e=findOne((Integer) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingFlightEntitiesList;
         }
@@ -64,7 +64,7 @@ public class FlightRepository implements CrudOperations<Integer, Flight> {
     @Override
     public Flight saveOne(Flight entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Flight) session.save(entity);
+            return findOne((Integer) session.save(entity));
         }
     }
 

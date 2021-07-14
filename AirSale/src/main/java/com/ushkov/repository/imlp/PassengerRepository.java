@@ -54,7 +54,7 @@ public class PassengerRepository implements CrudOperations<Long, Passenger> {
     public List<Passenger> saveAll(List<Passenger> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Passenger> resultOfSavingPassengerEntitiesList = entities.stream().map(e->e=(Passenger) session.save(e)).collect(Collectors.toList());
+            List<Passenger> resultOfSavingPassengerEntitiesList = entities.stream().map(e->e=findOne((Long) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingPassengerEntitiesList;
         }
@@ -63,7 +63,7 @@ public class PassengerRepository implements CrudOperations<Long, Passenger> {
     @Override
     public Passenger saveOne(Passenger entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Passenger) session.save(entity);
+            return findOne((Long) session.save(entity));
         }
     }
 

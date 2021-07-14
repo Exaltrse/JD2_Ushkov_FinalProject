@@ -60,7 +60,7 @@ public class AirlineRepository implements CrudOperations<Short, Airline> {
 //            for(Airline airline:entities){
 //                resultOfSavingAirlineEntitiesList.add((Airline) session.save(airline));
 //            }
-            resultOfSavingAirlineEntitiesList = entities.stream().map(e->e=(Airline) session.save(e)).collect(Collectors.toList());
+            resultOfSavingAirlineEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingAirlineEntitiesList;
         }
@@ -70,7 +70,7 @@ public class AirlineRepository implements CrudOperations<Short, Airline> {
     @Override
     public Airline saveOne(Airline entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Airline) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 

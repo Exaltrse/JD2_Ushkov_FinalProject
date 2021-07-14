@@ -54,7 +54,7 @@ public class AirportRepository implements CrudOperations<Short, Airport> {
     public List<Airport> saveAll(List<Airport> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Airport> resultOfSavingAirportEntitiesList = entities.stream().map(e->e=(Airport) session.save(e)).collect(Collectors.toList());
+            List<Airport> resultOfSavingAirportEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingAirportEntitiesList;
         }
@@ -63,7 +63,7 @@ public class AirportRepository implements CrudOperations<Short, Airport> {
     @Override
     public Airport saveOne(Airport entity) {
         try(Session session = sessionFactory.openSession()){
-            return (Airport) session.save(entity);
+            return findOne((Short) session.save(entity));
         }
     }
 
