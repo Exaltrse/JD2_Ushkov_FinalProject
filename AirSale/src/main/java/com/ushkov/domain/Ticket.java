@@ -1,14 +1,17 @@
 package com.ushkov.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 
@@ -21,18 +24,28 @@ public class Ticket {
     @Column(name = "ticket_id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
-    @Column(name = "passport", nullable = false)
-    private long passport;
-    @Column(name = "current_flight", nullable = false)
-    private long currentFlight;
-    @Column(name = "discount", nullable = false)
-    private short discount;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "passport", nullable = false)
+    @JsonBackReference
+    private Passport passport;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "current_flight", nullable = false)
+    @JsonBackReference
+    private CurrentFlight currentFlight;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "discount", nullable = false)
+    @JsonBackReference
+    private Discount discount;
     //TODO: Think about this type
     @Column(name = "final_price", nullable = false)
     private BigDecimal finalPrice;
-    @Column(name = "ticket_status")
-    private int ticket_status;
-    @Column(name = "seat_class", nullable = false)
-    private int seatClass;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ticket_status", nullable = false)
+    @JsonBackReference
+    private TicketStatus ticketStatus;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "seat", nullable = false)
+    @JsonBackReference
+    private PlaneSeats seat;
 
 }
