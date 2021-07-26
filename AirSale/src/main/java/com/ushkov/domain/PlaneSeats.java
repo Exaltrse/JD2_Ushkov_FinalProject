@@ -37,7 +37,7 @@ public class PlaneSeats {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "seat_class", nullable = false)
     @JsonBackReference
-    private SeatClass seatClass;
+    private SeatClass seat;
     @Column(name = "number_of_seats", nullable = false)
     private short numberOfSeats;
 

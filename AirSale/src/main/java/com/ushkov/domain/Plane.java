@@ -24,7 +24,7 @@ import java.util.Set;
 @Table(name = "plane")
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"airlines", "flights", "planeSeats", "flightPlanes"})
+@EqualsAndHashCode(exclude = {"airlines", "planeSeats", "flightPlanes"}) //"flights",
 public class Plane {
     @Id
     @Column(name = "plane_id")
@@ -39,9 +39,9 @@ public class Plane {
     @JsonIgnoreProperties("planes")
     private Set<Airline> airlines = Collections.emptySet();
 
-    @ManyToMany(mappedBy = "flights", fetch = FetchType.EAGER)
-    @JsonIgnoreProperties("flights")
-    private Set<Flight> flights = Collections.emptySet();
+//    @ManyToMany(mappedBy = "planes", fetch = FetchType.EAGER)
+//    @JsonIgnoreProperties("planes")
+//    private Set<Flight> flights = Collections.emptySet();
 
     @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonManagedReference

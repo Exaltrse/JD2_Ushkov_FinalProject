@@ -1,7 +1,6 @@
 package com.ushkov.beans;
 
 import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 
@@ -14,15 +13,11 @@ public class PersistenceBeanConfiguration {
     public SessionFactory getSessionFactory(DataSource dataSource) throws Exception {
         LocalSessionFactoryBean factoryBean = new LocalSessionFactoryBean();
 
-        // Package contain entity classes
         factoryBean.setPackagesToScan("com.ushkov");
         factoryBean.setDataSource(dataSource);
         factoryBean.setHibernateProperties(getAdditionalProperties());
         factoryBean.afterPropertiesSet();
-        //
-        SessionFactory sf = factoryBean.getObject();
-        System.out.println("## getSessionFactory: " + sf);
-        return sf;
+        return factoryBean.getObject();
     }
 
     private Properties getAdditionalProperties() {

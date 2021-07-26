@@ -1,7 +1,6 @@
 package com.ushkov.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,8 +14,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -27,7 +24,7 @@ import java.util.Set;
 @Table(name = "flight")
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"planes", "currentFlights", "flightPlanes"})
+@EqualsAndHashCode(exclude = {"currentFlights", "flightPlanes"}) //"planes",
 public class Flight {
     @Id
     @Column(name = "flight_id")
@@ -50,12 +47,12 @@ public class Flight {
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable( name = "flight_plane",
-            joinColumns = @JoinColumn(name = "flight"),
-            inverseJoinColumns = @JoinColumn(name = "plane"))
-    @JsonIgnoreProperties("flights")
-    private Set<Plane> planes = Collections.emptySet();
+//    @ManyToMany(fetch = FetchType.EAGER)
+//    @JoinTable( name = "flight_plane",
+//            joinColumns = @JoinColumn(name = "flight"),
+//            inverseJoinColumns = @JoinColumn(name = "plane"))
+//    @JsonIgnoreProperties("flights")
+//    private Set<Plane> planes = Collections.emptySet();
 
     @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonManagedReference
