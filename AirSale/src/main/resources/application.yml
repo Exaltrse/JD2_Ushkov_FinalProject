@@ -22,21 +22,8 @@ server:
   port: 8080
 
 ---
-
-#database:
-#  driver: org.postgresql.Driver
-#  url: "jdbc:postgresql://localhost:5432/student_demo"
-#  login: postgres
-#  password: root
-
----
-
-security:
-  secretKey: top_secret_key_hoho!
-
----
 jwtconfig:
-  secret: secret
+  secret: ZvkYYnyM929FM4NW9_hSis7_x3_9rymsDAx9yuOcc1I
   expiration: 600000
 
 ---

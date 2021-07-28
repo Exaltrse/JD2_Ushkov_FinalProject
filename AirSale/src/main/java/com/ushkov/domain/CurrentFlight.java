@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -24,6 +25,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "current_flight")
+@Cacheable("maincache")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"tickets"})

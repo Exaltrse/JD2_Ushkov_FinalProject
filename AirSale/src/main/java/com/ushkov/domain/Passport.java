@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -20,12 +21,13 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.sql.Timestamp;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Set;
 
 @Entity
 @Table(name = "passport")
+@Cacheable("maincache")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"passengers", "tickets"})
@@ -41,8 +43,7 @@ public class Passport {
     @Column(name = "series", length = 12, nullable = false)
     private String series;
     @Column(name = "expire_date", nullable = false)
-    //TODO: Change type of Data
-    private Date expire_date;
+    private Timestamp expireDate;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "citizenship", nullable = false)
     @JsonBackReference

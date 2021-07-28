@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "passenger")
+@Cacheable("maincache")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"users", "passports"})

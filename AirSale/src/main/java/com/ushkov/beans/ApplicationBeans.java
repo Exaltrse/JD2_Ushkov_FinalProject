@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationBeans {
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("users");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("maincache");
         cacheManager.setCaffeine(cacheProperties());
         return cacheManager;
     }

@@ -3,6 +3,7 @@ package com.ushkov.domain;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "ticket")
+@Cacheable("maincache")
 @Data
 @NoArgsConstructor
 public class Ticket {
