@@ -1,6 +1,7 @@
 package com.ushkov.repository.imlp;
 
 import com.ushkov.domain.User;
+import com.ushkov.domain.User_;
 import com.ushkov.repository.CrudOperations;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.ParameterExpression;
+import javax.persistence.criteria.Root;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +51,18 @@ public class UserRepository implements CrudOperations<Integer, User> {
             userCriteriaQuery.select(userCriteriaQuery.from(User.class));
 
             return session.createQuery(userCriteriaQuery).setFirstResult(offset.intValue()).setMaxResults(limit.intValue()).getResultList();
+        }
+    }
+
+    public User findByLogin(String login){
+        try(Session session = sessionFactory.openSession()){
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<User> userCriteriaQuery = cb.createQuery(User.class);
+            Root<User> userRoot = userCriteriaQuery.from(User.class);
+            ParameterExpression<String> type = cb.parameter(String.class);
+            Expression<String> param = userRoot.get(User_.login);
+            userCriteriaQuery.select(userRoot).where(cb.like(param,type));
+            return session.createQuery(userCriteriaQuery).getSingleResult();
         }
     }
 

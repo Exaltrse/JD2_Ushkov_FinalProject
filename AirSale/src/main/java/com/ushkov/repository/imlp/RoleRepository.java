@@ -50,6 +50,7 @@ public class RoleRepository implements CrudOperations<Short, Role> {
         }
     }
 
+
     @Override
     public List<Role> saveAll(List<Role> entities) {
         try(Session session = sessionFactory.openSession()){

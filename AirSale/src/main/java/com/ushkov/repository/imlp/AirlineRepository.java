@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,15 +51,10 @@ public class AirlineRepository implements CrudOperations<Short, Airline> {
     }
 
     @Override
-    //TODO: maybe it can be implicated more simple?
     public List<Airline> saveAll(List<Airline> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<Airline> resultOfSavingAirlineEntitiesList = new ArrayList<>();
-//            for(Airline airline:entities){
-//                resultOfSavingAirlineEntitiesList.add((Airline) session.save(airline));
-//            }
-            resultOfSavingAirlineEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
+            List<Airline> resultOfSavingAirlineEntitiesList = entities.stream().map(e->e=findOne((Short) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingAirlineEntitiesList;
         }

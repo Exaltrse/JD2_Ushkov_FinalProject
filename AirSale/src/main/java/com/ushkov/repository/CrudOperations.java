@@ -1,9 +1,5 @@
 package com.ushkov.repository;
 
-import org.hibernate.Session;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import java.util.List;
 
 public interface CrudOperations <K, T>{

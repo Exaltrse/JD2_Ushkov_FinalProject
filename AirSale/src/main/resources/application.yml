@@ -17,16 +17,13 @@ spring:
     password: 297113973
     url: "jdbc:postgresql://localhost:5432/jd2_airsales"
     driver-class-name: org.postgresql.Driver
+#  autoconfigure:
+#    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 
 server:
   port: 8080
 
----
 jwtconfig:
   secret: ZvkYYnyM929FM4NW9_hSis7_x3_9rymsDAx9yuOcc1I
   expiration: 600000
 
----
-#spring:
-#  autoconfigure:
-#    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
