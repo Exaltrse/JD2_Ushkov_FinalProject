@@ -1,7 +1,7 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,22 +29,24 @@ import java.util.Set;
 public class Passenger {
     @Id
     @Column(name = "passenger_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "first_name", length = 100, nullable = false)
     private String firstName;
     @Column(name = "last_name", length = 100, nullable = false)
     private String lastName;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "passenger_class", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private PassengerClass passengerClass;
     @Column(name = "comments", length = 100)
     private String comments;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("passengers")
-    private Set<User> users = Collections.emptySet();
+    private Set<Users> users = Collections.emptySet();
 
     @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("passengers")

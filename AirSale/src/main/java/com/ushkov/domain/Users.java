@@ -1,7 +1,7 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -22,24 +22,26 @@ import java.util.Collections;
 import java.util.Set;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Cacheable("maincache")
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"passengers"})
-public class User {
+public class Users {
     @Id
     @Column(name = "user_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_role", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Role role;
     @Column(name = "login", length = 40, unique = true, nullable = false)
     private String login;
     @Column(name = "password", length = 140, nullable = false)
     private String password;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable( name = "user_passenger",

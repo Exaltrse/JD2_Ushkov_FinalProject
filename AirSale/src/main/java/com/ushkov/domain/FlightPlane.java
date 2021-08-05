@@ -30,20 +30,22 @@ import java.util.Set;
 public class FlightPlane {
     @Id
     @Column(name = "flight_plane_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "flight", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Flight flight;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plane", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Plane plane;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "flightPlane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<CurrentFlight> currentFlights = Collections.emptySet();
 }

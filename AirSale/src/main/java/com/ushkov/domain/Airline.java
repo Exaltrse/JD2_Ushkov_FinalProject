@@ -1,7 +1,7 @@
 package com.ushkov.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -31,15 +31,17 @@ import java.util.Set;
 public class Airline {
     @Id
     @Column(name = "airline_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "airline_name", length = 100, nullable = false, unique = true)
     private String name;
     @Column(name = "airline_short_name", length = 3, nullable = false, unique = true)
     private String shortName;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "airline", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Flight> flights = Collections.emptySet();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -48,5 +50,6 @@ public class Airline {
                 inverseJoinColumns = @JoinColumn(name = "plane"))
     @JsonIgnoreProperties("airlines")
     private Set<Plane> planes = Collections.emptySet();
+
 
 }

@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,12 +27,14 @@ import java.util.Set;
 public class TicketStatus {
     @Id
     @Column(name = "ticket_status_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "ticket_status_name", length = 20, nullable = false, unique = true)
     private String name;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "ticketStatus", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 }

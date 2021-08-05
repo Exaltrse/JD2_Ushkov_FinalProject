@@ -19,12 +19,14 @@ import javax.persistence.Table;
 public class AirlinePlane {
     @Id
     @Column(name = "airline_plane_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private  long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "plane", nullable = false)
     private long plane;
     @Column(name = "airline", nullable = false)
     private short airline;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 }

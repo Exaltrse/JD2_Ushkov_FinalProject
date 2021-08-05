@@ -30,21 +30,23 @@ import java.util.Set;
 public class PlaneSeats {
     @Id
     @Column(name = "plane_seats_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plane", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Plane plane;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "seat_class", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private SeatClass seat;
     @Column(name = "number_of_seats", nullable = false)
     private short numberOfSeats;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "seat", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 
 }

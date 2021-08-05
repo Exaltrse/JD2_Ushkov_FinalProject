@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,13 +27,15 @@ import java.util.Set;
 public class Country {
     @Id
     @Column(name = "country_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "country_name", length = 150, nullable = false, unique = true)
     private String name;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "citizenship", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Passport> passports = Collections.emptySet();
 
 }

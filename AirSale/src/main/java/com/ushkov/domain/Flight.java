@@ -30,24 +30,26 @@ import java.util.Set;
 public class Flight {
     @Id
     @Column(name = "flight_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     @Column(name = "flight_number", length = 7, nullable = false)
     private String number;
     @ManyToOne
     @JoinColumn(name = "airline", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Airline airline;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "airport_departure", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Airport departure;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "airport_destination", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Airport destination;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
 //    @ManyToMany(fetch = FetchType.EAGER)
 //    @JoinTable( name = "flight_plane",
@@ -57,10 +59,10 @@ public class Flight {
 //    private Set<Plane> planes = Collections.emptySet();
 
     @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<CurrentFlight> currentFlights = Collections.emptySet();
 
     @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<FlightPlane> flightPlanes = Collections.emptySet();
 }

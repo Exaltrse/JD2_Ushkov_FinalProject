@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,16 +27,18 @@ import java.util.Set;
 public class Role {
     @Id
     @Column(name = "roles_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "role_name", length = 20, nullable = false, unique = true)
     private String name;
     //TODO: Think about valuable permissions and create class
     @Column(name = "permissions")
     private String permissions;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "role", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private Set<User> users = Collections.emptySet();
+    @JsonBackReference
+    private Set<Users> users = Collections.emptySet();
 
 }

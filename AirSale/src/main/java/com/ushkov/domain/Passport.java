@@ -33,9 +33,9 @@ import java.util.Set;
 @EqualsAndHashCode(exclude = {"passengers", "tickets"})
 public class Passport {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "passport_id")
-    private long id;
+    private Long id;
     @Column(name = "first_name_latin", length = 100, nullable = false)
     private String firstNameLatin;
     @Column(name = "last_name_latin", length = 100, nullable = false)
@@ -46,8 +46,10 @@ public class Passport {
     private Timestamp expireDate;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "citizenship", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private Country citizenship;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable( name = "passenger_passport",
@@ -57,6 +59,6 @@ public class Passport {
     private Set<Passenger> passengers = Collections.emptySet();
 
     @OneToMany(mappedBy = "passport", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 }

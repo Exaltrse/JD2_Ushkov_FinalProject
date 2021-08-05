@@ -1,7 +1,7 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.User;
+import com.ushkov.domain.Users;
 import com.ushkov.repository.imlp.UserRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -35,11 +35,11 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response = User.class,
+                    response = Users.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<User> findAll() {
+    public List<Users> findAll() {
         return repository.findAll();
     }
 
@@ -58,10 +58,10 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = User.class)
+                    response = Users.class)
     })
     @GetMapping("/id")
-    public User findOne(@RequestParam("id") Integer id) {
+    public Users findOne(@RequestParam("id") Integer id) {
         return repository.findOne(id);
     }
 
@@ -85,11 +85,11 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.",
-                    response = User.class,
+                    response = Users.class,
                     responseContainer = "List")
     })
     @GetMapping("/limitoffset")
-    public List<User> findLimitOffset(@RequestParam("limit") Integer limit,
+    public List<Users> findLimitOffset(@RequestParam("limit") Integer limit,
                                       @RequestParam("offset") Integer offset) {
         return repository.findLimitOffset(limit, offset);
     }
@@ -100,16 +100,16 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Entities saved successfully.",
-                    response = User.class,
+                    response = Users.class,
                     responseContainer = "List")
     })
     @PostMapping("/postall")
-    public List<User> saveAll(
+    public List<Users> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of User`s entities for update",
                     required = true)
-            @RequestBody List<User> entities) {
+            @RequestBody List<Users> entities) {
         return repository.saveAll(entities);
     }
 
@@ -119,15 +119,15 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.",
-                    response = User.class)
+                    response = Users.class)
     })
     @PostMapping("/post")
-    public User saveOne(
+    public Users saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody User entity) {
+            @RequestBody Users entity) {
         return repository.saveOne(entity);
     }
 
@@ -137,15 +137,15 @@ public class UserController {
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = User.class)
+                    response = Users.class)
     })
     @PutMapping("/put")
-    public User updateOne(
+    public Users updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody User entity) {
+            @RequestBody Users entity) {
         return repository.updateOne(entity);
     }
 }

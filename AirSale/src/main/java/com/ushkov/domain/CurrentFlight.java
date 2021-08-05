@@ -32,11 +32,11 @@ import java.util.Set;
 public class CurrentFlight {
     @Id
     @Column(name = "current_flight_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "flight_plane", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private FlightPlane flightPlane;
     @Column(name = "departure_date", nullable = false)
     private Timestamp departureDate;
@@ -47,10 +47,12 @@ public class CurrentFlight {
     private BigDecimal basePrice;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "current_flight_status", nullable = false)
-    @JsonBackReference
+    @JsonManagedReference
     private CurrentFlightStatus currentFlightsStatus;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "flight", nullable = false)
@@ -58,7 +60,7 @@ public class CurrentFlight {
     private Flight flight;
 
     @OneToMany(mappedBy = "currentFlight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 
 }

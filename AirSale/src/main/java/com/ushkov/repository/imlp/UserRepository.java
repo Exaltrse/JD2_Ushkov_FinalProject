@@ -1,7 +1,7 @@
 package com.ushkov.repository.imlp;
 
-import com.ushkov.domain.User;
-import com.ushkov.domain.User_;
+import com.ushkov.domain.Users;
+import com.ushkov.domain.Users_;
 import com.ushkov.repository.CrudOperations;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
@@ -20,71 +20,71 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
-public class UserRepository implements CrudOperations<Integer, User> {
+public class UserRepository implements CrudOperations<Integer, Users> {
     @Autowired
     @Qualifier("sessionFactory")
     private SessionFactory sessionFactory;
 
     @Override
-    public List<User> findAll() {
+    public List<Users> findAll() {
         try(Session session = sessionFactory.openSession()){
             CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<User> userCriteriaQuery = cb.createQuery(User.class);
-            userCriteriaQuery.select(userCriteriaQuery.from(User.class));
+            CriteriaQuery<Users> userCriteriaQuery = cb.createQuery(Users.class);
+            userCriteriaQuery.select(userCriteriaQuery.from(Users.class));
 
             return session.createQuery(userCriteriaQuery).getResultList();
         }
     }
 
     @Override
-    public User findOne(Integer id) {
+    public Users findOne(Integer id) {
         try(Session session = sessionFactory.openSession()){
-            return session.find(User.class, id);
+            return session.find(Users.class, id);
         }
     }
 
     @Override
-    public List<User> findLimitOffset(Integer limit, Integer offset) {
+    public List<Users> findLimitOffset(Integer limit, Integer offset) {
         try(Session session = sessionFactory.openSession()){
             CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<User> userCriteriaQuery = cb.createQuery(User.class);
-            userCriteriaQuery.select(userCriteriaQuery.from(User.class));
+            CriteriaQuery<Users> userCriteriaQuery = cb.createQuery(Users.class);
+            userCriteriaQuery.select(userCriteriaQuery.from(Users.class));
 
             return session.createQuery(userCriteriaQuery).setFirstResult(offset.intValue()).setMaxResults(limit.intValue()).getResultList();
         }
     }
 
-    public User findByLogin(String login){
+    public Users findByLogin(String login){
         try(Session session = sessionFactory.openSession()){
             CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<User> userCriteriaQuery = cb.createQuery(User.class);
-            Root<User> userRoot = userCriteriaQuery.from(User.class);
+            CriteriaQuery<Users> userCriteriaQuery = cb.createQuery(Users.class);
+            Root<Users> userRoot = userCriteriaQuery.from(Users.class);
             ParameterExpression<String> type = cb.parameter(String.class);
-            Expression<String> param = userRoot.get(User_.login);
+            Expression<String> param = userRoot.get(Users_.login);
             userCriteriaQuery.select(userRoot).where(cb.like(param,type));
             return session.createQuery(userCriteriaQuery).getSingleResult();
         }
     }
 
     @Override
-    public List<User> saveAll(List<User> entities) {
+    public List<Users> saveAll(List<Users> entities) {
         try(Session session = sessionFactory.openSession()){
             session.beginTransaction();
-            List<User> resultOfSavingUserEntitiesList = entities.stream().map(e->e=findOne((Integer) session.save(e))).collect(Collectors.toList());
+            List<Users> resultOfSavingUserEntitiesList = entities.stream().map(e->e=findOne((Integer) session.save(e))).collect(Collectors.toList());
             session.getTransaction().commit();
             return resultOfSavingUserEntitiesList;
         }
     }
 
     @Override
-    public User saveOne(User entity) {
+    public Users saveOne(Users entity) {
         try(Session session = sessionFactory.openSession()){
             return findOne((Integer) session.save(entity));
         }
     }
 
     @Override
-    public User updateOne(User entity) {
+    public Users updateOne(Users entity) {
         try(Session session = sessionFactory.openSession()){
             session.update(entity);
             return findOne(entity.getId());

@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -26,8 +26,8 @@ import java.util.Set;
 public class Airport {
     @Id
     @Column(name = "airport_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "airport_name", length = 200, nullable = false, unique = true)
     private String name;
     @Column(name = "airport_short_name", length = 4, nullable = false, unique = true)
@@ -35,13 +35,15 @@ public class Airport {
     //TODO: make JSON with coordinates
     @Column(name = "airpot_location", length = 100, nullable = false, unique = true)
     private String location;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "departure", fetch = FetchType.EAGER)
-    @JsonManagedReference
+    @JsonBackReference
     Set<Flight> departure = Collections.emptySet();
 
     @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER)
-    @JsonManagedReference
+    @JsonBackReference
     Set<Flight> destination = Collections.emptySet();
 
 

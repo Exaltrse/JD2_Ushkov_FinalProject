@@ -1,6 +1,7 @@
 package com.ushkov.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
@@ -30,12 +31,14 @@ import java.util.Set;
 public class Plane {
     @Id
     @Column(name = "plane_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     @Column(name = "aircraft_number", length = 9, nullable = false, unique = true)
     private String aircraftNumber;
     @Column(name = "properties", length = 100)
     private String properties;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @ManyToMany(mappedBy = "planes", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("planes")
@@ -46,7 +49,7 @@ public class Plane {
 //    private Set<Flight> flights = Collections.emptySet();
 
     @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<PlaneSeats> planeSeats = Collections.emptySet();
 
 

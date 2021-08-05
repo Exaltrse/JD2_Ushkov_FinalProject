@@ -1,7 +1,7 @@
 package com.ushkov.security.service;
 
 
-import com.ushkov.domain.User;
+import com.ushkov.domain.Users;
 import com.ushkov.repository.imlp.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -21,9 +21,9 @@ public class UserProviderService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            Optional<User> searchResult = Optional.ofNullable(userRepository.findByLogin(username));
+            Optional<Users> searchResult = Optional.ofNullable(userRepository.findByLogin(username));
             if (searchResult.isPresent()) {
-                User user = searchResult.get();
+                Users user = searchResult.get();
                 return new org.springframework.security.core.userdetails.User(
                         user.getLogin(),
                         user.getPassword(),

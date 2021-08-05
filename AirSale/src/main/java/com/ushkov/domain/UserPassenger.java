@@ -19,12 +19,14 @@ import javax.persistence.Table;
 public class UserPassenger {
     @Id
     @Column(name = "user_passenger")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(name = "user", nullable = false)
     private int user;
     @Column(name = "passenger", nullable = false)
     private long passenger;
     @Column(name = "is_expired", nullable = false)
     private boolean isExpired;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 }

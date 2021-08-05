@@ -2,6 +2,7 @@ package com.ushkov.controller;
 
 
 import com.ushkov.domain.Airline;
+import com.ushkov.repository.AirlineRepositorySpringData;
 import com.ushkov.repository.imlp.AirlineRepository;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -28,6 +29,8 @@ import java.util.List;
 public class AirlineController {
 
     private final AirlineRepository airlineRepository;
+
+    private final AirlineRepositorySpringData airlineRepositorySpringDataI;
 
     @ApiOperation(  value = "Find all Airlines entries from DB.",
                     notes = "Find all Airlines entries from DB.",
@@ -129,6 +132,7 @@ public class AirlineController {
                     required = true)
             @RequestBody Airline entity) {
         return airlineRepository.saveOne(entity);
+
     }
 
     @ApiOperation(  value = "Update Airline`s entity in DB.",

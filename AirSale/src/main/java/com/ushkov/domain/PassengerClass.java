@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,16 +27,18 @@ import java.util.Set;
 public class PassengerClass {
     @Id
     @Column(name = "passenger_class_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private short id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Short id;
     @Column(name = "passenger_class_name", length = 30, nullable = false, unique = true)
     private String name;
     @Column(name = "passenger_class_properties", nullable = false)
     //TODO: Think about valuable properties and create class
     private String properties;
+    @Column(name = "disabled", nullable = false)
+    private boolean disabled;
 
     @OneToMany(mappedBy = "passengerClass", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JsonManagedReference
+    @JsonBackReference
     private Set<Passenger> passengers = Collections.emptySet();
 
 }
