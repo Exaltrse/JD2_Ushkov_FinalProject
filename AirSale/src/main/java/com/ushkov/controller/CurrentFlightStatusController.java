@@ -2,7 +2,8 @@ package com.ushkov.controller;
 
 
 import com.ushkov.domain.CurrentFlightStatus;
-import com.ushkov.repository.imlp.CurrentFlightStatusRepository;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.CurrentFlightStatusRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -11,6 +12,12 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,36 +26,40 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.SQLException;
 import java.util.List;
 
-@Api(tags = "CurrentFlightStatus", value="The CurrentFlightStatus API")
+@Api(tags = "CurrentFlightStatus", value="The CurrentFlightStatus API", description = "The CurrentFlightStatus API")
 @RestController
 @RequestMapping("/currentflightstatus")
 @RequiredArgsConstructor
 public class CurrentFlightStatusController {
-    private final CurrentFlightStatusRepository repository;
 
-    @ApiOperation(  value = "Find all CurrentFlightStatus`s entries from DB.",
+    private final CurrentFlightStatusRepositorySD repository;
+
+    @ApiOperation(  value = "Find all not disabled CurrentFlightStatuss entries from DB.",
+            notes = "Find all not disabled CurrentFlightStatuss entries from DB.",
             httpMethod = "GET")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response = CurrentFlightStatus.class,
+                    response=CurrentFlightStatus.class,
                     responseContainer="List")
     })
     @GetMapping
     public List<CurrentFlightStatus> findAll() {
-        return repository.findAll();
+
+        return repository.findAllByDisabledIsFalse();
     }
 
-    @ApiOperation(  value="Find CurrentFlightStatus`s entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB.",
+    @ApiOperation(  value="Find CurrentFlightStatus entry from DB by ID.",
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "id",
-                    value = "Id of CurrentFlightStatus`s entry.",
+                    value = "Id of CurrentFlightStatus entry.",
                     required = true,
                     dataType = "string",
                     paramType = "query")
@@ -61,36 +72,19 @@ public class CurrentFlightStatusController {
     })
     @GetMapping("/id")
     public CurrentFlightStatus findOne(@RequestParam("id") Short id) {
-        return repository.findOne(id);
+
+        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
     }
 
-    @ApiOperation(  value = "Find [limit] entries from DB with [offset].",
-            httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "limit",
-                    dataType = "string",
-                    paramType = "query",
-                    value = "Limit entries in result list",
-                    required = true),
-            @ApiImplicitParam(
-                    name = "offset",
-                    dataType = "string",
-                    paramType = "query",
-                    value = "Offset from the beginning of results.",
-                    required = true),
-    })
+    @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
-                    message = "Entries found successfully.",
-                    response = CurrentFlightStatus.class,
-                    responseContainer = "List")
+                    message = "Entries found successfully.")
     })
-    @GetMapping("/limitoffset")
-    public List<CurrentFlightStatus> findLimitOffset(@RequestParam("limit") Short limit,
-                                                     @RequestParam("offset") Short offset) {
-        return repository.findLimitOffset(limit, offset);
+    @GetMapping("/page")
+    public Page<CurrentFlightStatus> findAll(Pageable page) {
+        return repository.findAllByDisabledIsFalse(page);
     }
 
     @ApiOperation(  value = "Save list of CurrentFlightStatus`s entities to DB",
@@ -98,11 +92,10 @@ public class CurrentFlightStatusController {
     @ApiResponses({
             @ApiResponse(
                     code = 200,
-                    message = "Entities saved successfully.",
-                    response = CurrentFlightStatus.class,
-                    responseContainer = "List")
+                    message = "Entities saved successfully.")
     })
     @PostMapping("/postall")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<CurrentFlightStatus> saveAll(
             @ApiParam(
                     name = "entities",
@@ -117,8 +110,7 @@ public class CurrentFlightStatusController {
     @ApiResponses({
             @ApiResponse(
                     code = 200,
-                    message = "Entity saved successfully.",
-                    response = CurrentFlightStatus.class)
+                    message = "Entity saved successfully.")
     })
     @PostMapping("/post")
     public CurrentFlightStatus saveOne(
@@ -127,7 +119,7 @@ public class CurrentFlightStatusController {
                     value = "Entity for save",
                     required = true)
             @RequestBody CurrentFlightStatus entity) {
-        return repository.saveOne(entity);
+        return repository.save(entity);
     }
 
     @ApiOperation(  value = "Update CurrentFlightStatus`s entity in DB.",
@@ -145,6 +137,21 @@ public class CurrentFlightStatusController {
                     value = "Entity for update",
                     required = true)
             @RequestBody CurrentFlightStatus entity) {
-        return repository.updateOne(entity);
+        return repository.saveAndFlush(entity);
+    }
+
+
+    @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @DeleteMapping("/disable")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    public void disableOne(Short id){
+        repository.disableEntity(id);
+    }
+
+    @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @DeleteMapping("/disableall")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    public void disableOne(List<Short> idList){
+        repository.disableEntities(idList);
     }
 }
