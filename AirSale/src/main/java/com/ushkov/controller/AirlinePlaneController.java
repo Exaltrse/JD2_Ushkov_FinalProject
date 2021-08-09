@@ -115,8 +115,8 @@ public class AirlinePlaneController {
             @RequestParam
             int planeId,
             Pageable page) {
-        Airline airline = airlineRepositorySD.findById(airlineId).orElseThrow(()->new NoSuchEntityException(airlineId, Airline.class.getSimpleName()));
-        Plane plane = planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
+        airlineRepositorySD.findById(airlineId).orElseThrow(()->new NoSuchEntityException(airlineId, Airline.class.getSimpleName()));
+        planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
         if(repository.existsAirlinePlaneByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId))
             throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
         return repository.findByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId);

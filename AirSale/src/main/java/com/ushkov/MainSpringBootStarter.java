@@ -14,7 +14,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 
-@SpringBootApplication(scanBasePackages = "com.ushkov")
+@SpringBootApplication(scanBasePackages = "com.ushkov", excludeName = "com.ushkov.controller.oldcontrollers")
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableWebMvc
 @EnableTransactionManagement

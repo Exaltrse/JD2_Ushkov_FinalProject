@@ -177,6 +177,12 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+<!--        Another swagger ui. Think about it. -->
+<!--        <dependency>-->
+<!--            <groupId>org.springdoc</groupId>-->
+<!--            <artifactId>springdoc-openapi-ui</artifactId>-->
+<!--            <version>1.5.9</version>-->
+<!--        </dependency>-->
 
     </dependencies>
 

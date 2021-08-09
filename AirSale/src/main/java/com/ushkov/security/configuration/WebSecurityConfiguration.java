@@ -29,7 +29,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userProvider;
 
     private final TokenUtils tokenUtils;
-
+    //TODO: I know that i must change provider.
     private final NoOpPasswordEncoder noOpPasswordEncoder;
 
     @Bean
@@ -69,13 +69,17 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/actuator/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/swagger-ui.html#").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .antMatchers("/guest/**").permitAll()
-                .antMatchers("/registration/**").permitAll()
-                .antMatchers("/hibernate/**").permitAll()
+                //.antMatchers("/guest/**").permitAll()
+                //.antMatchers("/registration/**").permitAll()
+                //.antMatchers("/hibernate/**").permitAll()
                 .antMatchers("/authentication/**").permitAll()
-                .antMatchers("/rest/**").permitAll()
-                .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers("/**").permitAll()
+                //.antMatchers("/rest/**").permitAll()
+                //.antMatchers("/admin/**").hasRole("ADMIN")
+                //.antMatchers("/**").permitAll()
+                .antMatchers(HttpMethod.DELETE).hasRole("ADMIN")
+                .antMatchers(HttpMethod.PUT).hasRole("MANAGER")
+                .antMatchers(HttpMethod.POST).hasRole("MANAGER")
+                .antMatchers(HttpMethod.GET).permitAll()
                 .anyRequest().authenticated();
 
         // Custom JWT based authentication
