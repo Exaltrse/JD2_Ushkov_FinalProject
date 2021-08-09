@@ -1,6 +1,5 @@
 package com.ushkov.controller;
 
-
 import com.ushkov.domain.Users;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.RoleRepositorySD;

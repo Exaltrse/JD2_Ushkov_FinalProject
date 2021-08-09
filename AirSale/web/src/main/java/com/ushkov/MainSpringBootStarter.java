@@ -1,5 +1,6 @@
 package com.ushkov;
 
+
 import com.ushkov.beans.ApplicationBeans;
 import com.ushkov.beans.PersistenceBeanConfiguration;
 import com.ushkov.beans.SwaggerConfig;
@@ -21,6 +22,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableCaching
 @EnableSwagger2
 @Import({
+
         ApplicationBeans.class,
         SwaggerConfig.class,
         PersistenceBeanConfiguration.class,
