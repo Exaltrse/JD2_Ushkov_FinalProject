@@ -1,8 +1,12 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Passenger;
+import com.ushkov.domain.PassengerPassport;
 import com.ushkov.domain.Passport;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
 import com.ushkov.repository.springdata.PassportRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Api(tags = "Passport", value="The Passport API", description = "The Passport API")
 @RestController
@@ -36,6 +41,8 @@ import java.util.List;
 public class PassportController {
 
     private final PassportRepositorySD repository;
+    private final PassengerRepositorySD passengerRepositorySD;
+    private final PassengerPassportRepositorySD passengerPassportRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled Passports entries from DB.",
             notes = "Find all not disabled Passports entries from DB.",
@@ -85,6 +92,81 @@ public class PassportController {
     @GetMapping("/page")
     public Page<Passport> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyname")
+    public Page<Passenger> findByName(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByFirstNameLatinIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by lastname or part of lastname.")
+    @GetMapping("/findbylastname")
+    public Page<Passenger> findByLastname(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByLastNameLatinIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by firstname and lastname or part of it.")
+    @GetMapping("/findbyfirstandlastname")
+    public Page<Passenger> findByFirstAndLastname(
+            @ApiParam(
+                    name = "firstname",
+                    value = "String for searching by firstname.",
+                    required = true)
+            @RequestParam
+                    String firstName,
+            @ApiParam(
+                    name = "lastname",
+                    value = "String for searching by lastname.",
+                    required = true)
+            @RequestParam
+                    String lastName,
+            Pageable page) {
+        return repository.findByFirstNameLatinIsContainingAndLastNameLatinIsContainingAndDisabledIsFalse(firstName, lastName, page);
+    }
+
+    @ApiOperation(value = "Find passports by passenger.")
+    @GetMapping("/findbypassenger")
+    public Page<Passport> findAllPassportsByPassenger(
+            @ApiParam(
+                    name = "passenger",
+                    value = "Passenger entity to search for dependent passport entities.",
+                    required = true)
+            @RequestParam
+                    Passenger passenger,
+            Pageable page){
+        passengerRepositorySD.findById(passenger.getId()).orElseThrow(()->new NoSuchEntityException(passenger.getId(), "Passenger"));
+        List<PassengerPassport> passengerPassportList = passengerPassportRepositorySD.findAllByPassenger(passenger.getId());
+        if(passengerPassportList.isEmpty()) throw new NoSuchEntityException("There is no passports that depended of passenger ID " + passenger.getId() + ".");
+        List<Long> idList = passengerPassportList.stream().map(PassengerPassport::getPassport).distinct().collect(Collectors.toList());
+        return repository.findAllByIdInAndDisabledIsFalse(idList, page);
+    }
+
+    @ApiOperation(value = "Find passports by it series.")
+    @GetMapping("/findbyseries")
+    public Page<Passport> findAllPassportsBySeries(
+            @ApiParam(
+                    name = "series",
+                    value = "Series of passport or it part. String.",
+                    required = true)
+            @RequestParam
+                    String series,
+            Pageable page){
+        return repository.findAllBySeriesContainingAndDisabledIsFalse(series, page);
     }
 
     @ApiOperation(  value = "Save list of Passport`s entities to DB",
@@ -139,7 +221,6 @@ public class PassportController {
             @RequestBody Passport entity) {
         return repository.saveAndFlush(entity);
     }
-
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @DeleteMapping("/disable")

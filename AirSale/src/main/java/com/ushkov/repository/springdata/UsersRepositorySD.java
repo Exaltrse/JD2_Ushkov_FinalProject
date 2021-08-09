@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Role;
 import com.ushkov.domain.Users;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,10 @@ public interface UsersRepositorySD
     List<Users> findAllByDisabledIsFalse();
 
     Page<Users> findAllByDisabledIsFalse(Pageable page);
+
+    Page<Users> findAllByLoginIsContainingAndDisabledIsFalse(String login, Pageable page);
+
+    Users findByLogin(String login);
+
+    Page<Users> findAllByRole(Role role, Pageable pageable);
 }

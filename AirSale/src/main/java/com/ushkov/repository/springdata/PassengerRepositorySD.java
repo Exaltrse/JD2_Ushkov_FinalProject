@@ -28,4 +28,12 @@ public interface PassengerRepositorySD
     Page<Passenger> findAllByDisabledIsFalse(Pageable page);
 
     List<Passenger> findAllByDisabledIsFalse();
+
+    Page<Passenger> findAllByIdInAndDisabledIsFalse(List<Long> idList, Pageable page);
+
+    Page<Passenger> findAllByFirstNameIsContainingAndDisabledIsFalse(String name, Pageable page);
+
+    Page<Passenger> findAllByLastNameIsContainingAndDisabledIsFalse(String name, Pageable page);
+
+    Page<Passenger> findByFirstNameIsContainingAndLastNameIsContainingAndDisabledIsFalse(String firstName, String lastName, Pageable page);
 }

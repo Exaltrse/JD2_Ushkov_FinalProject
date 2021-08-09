@@ -3,7 +3,9 @@ package com.ushkov.controller;
 
 import com.ushkov.domain.Airline;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -36,6 +38,8 @@ import java.util.List;
 public class AirlineController {
 
     private final AirlineRepositorySD repository;
+    private final PlaneRepositorySD planeRepositorySD;
+    private final AirlinePlaneRepositorySD airlinePlaneRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled Airlines entries from DB.",
                     notes = "Find all not disabled Airlines entries from DB.",
@@ -111,6 +115,22 @@ public class AirlineController {
             String name,
             Pageable page) {
         return repository.findAllByShortNameIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by planes.")
+    @GetMapping("/findbyplanes")
+    public Page<Airline> findByPlanes(
+            @ApiParam(
+                    name = "planeidlist",
+                    value = "List of ID of planes.",
+                    required = true)
+            @RequestParam
+            List<Integer> planeIdList,
+            Pageable page) {
+        planeIdList.stream().forEach(pil->planeRepositorySD.findById(pil).orElseThrow());
+        return repository.findAllByPlaneAndDisabledIsFalse(
+                planeIdList,
+                page);
     }
 
     @ApiOperation(  value = "Save list of Airline`s entities to DB",

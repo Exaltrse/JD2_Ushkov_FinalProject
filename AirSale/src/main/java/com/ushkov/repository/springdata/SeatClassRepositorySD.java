@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.SeatClass;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,6 @@ public interface SeatClassRepositorySD
     Page<SeatClass> findAllByDisabledIsFalse(Pageable page);
 
     List<SeatClass> findAllByDisabledIsFalse();
+
+    Page<Airline> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 }

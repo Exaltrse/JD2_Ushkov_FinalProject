@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.Country;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,6 @@ public interface CountryRepositorySD
     Page<Country> findAllByDisabledIsFalse(Pageable page);
 
     List<Country> findAllByDisabledIsFalse();
+
+    Page<Airline> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 }

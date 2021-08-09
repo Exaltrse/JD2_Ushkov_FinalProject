@@ -1,6 +1,7 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.PassengerClass;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.PassengerClassRepositorySD;
@@ -85,6 +86,19 @@ public class PassengerClassController {
     @GetMapping("/page")
     public Page<PassengerClass> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyname")
+    public Page<Airline> findByName(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
     }
 
     @ApiOperation(  value = "Save list of PassengerClass`s entities to DB",

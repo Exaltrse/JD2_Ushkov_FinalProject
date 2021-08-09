@@ -1,9 +1,15 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Passenger;
 import com.ushkov.domain.PassengerPassport;
+import com.ushkov.domain.Passport;
+import com.ushkov.domain.Users;
+import com.ushkov.exception.ExistingEntityException;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
+import com.ushkov.repository.springdata.PassportRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -36,6 +42,8 @@ import java.util.List;
 public class PassengerPassportController {
 
     private final PassengerPassportRepositorySD repository;
+    private final PassengerRepositorySD passengerRepositorySD;
+    private final PassportRepositorySD passportRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled PassengerPassports entries from DB.",
             notes = "Find all not disabled PassengerPassports entries from DB.",
@@ -140,6 +148,42 @@ public class PassengerPassportController {
         return repository.saveAndFlush(entity);
     }
 
+    @ApiOperation(
+            value = "Add PassengerPassport`s entity in DB - adding passport.",
+            notes = "Add PassengerPassport`s entity in DB - adding passport. Passport's and passenger's entities must be saved in DB.",
+            httpMethod = "PUT")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entities updated successfully.",
+                    response = Users.class)
+    })
+    @PutMapping("/addpassport")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    public void addPassengerToUser(
+            @ApiParam(
+                    name = "passenger",
+                    value = "Passenger for adding passport entity",
+                    required = true)
+            @RequestBody
+                    long passengerId,
+            @ApiParam(
+                    name = "passport",
+                    value = "Passport entity for adding to passenger",
+                    required = true)
+            @RequestBody
+                    long passportId) {
+        passengerRepositorySD.findById(passengerId).orElseThrow(()->new NoSuchEntityException(passengerId, Passenger.class.getSimpleName()));
+        passportRepositorySD.findById(passportId).orElseThrow(()->new NoSuchEntityException(passportId, Passport.class.getSimpleName()));
+        if(repository.existsPassengerPassportByPassengerAndPassport(passengerId, passportId))
+            throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
+        PassengerPassport passengerPassport = new PassengerPassport();
+        passengerPassport.setPassenger(passengerId);
+        passengerPassport.setPassport(passportId);
+        passengerPassport.setExpired(false);
+        passengerPassport.setDisabled(false);
+        repository.save(passengerPassport);
+    }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @DeleteMapping("/disable")

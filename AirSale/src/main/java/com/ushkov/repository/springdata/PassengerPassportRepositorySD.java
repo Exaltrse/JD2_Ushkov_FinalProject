@@ -27,4 +27,8 @@ public interface PassengerPassportRepositorySD
     List<PassengerPassport> findAllByDisabledIsFalse();
 
     Page<PassengerPassport> findAllByDisabledIsFalse(Pageable page);
+
+    boolean existsPassengerPassportByPassengerAndPassport(long passengerId, long passportId);
+
+    List<PassengerPassport> findAllByPassenger(long idList);
 }

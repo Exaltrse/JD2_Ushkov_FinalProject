@@ -28,20 +28,32 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"flights", "planes"})
+@JsonIgnoreProperties(value = {"flights", "planes"})
+//@Validated
+//@Schema(description = "Entity, that represent Arline")
 public class Airline {
     @Id
     @Column(name = "airline_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@Schema(description = "Primary key. ID")
     private Short id;
     @Column(name = "airline_name", length = 100, nullable = false, unique = true)
+    //@Schema(description = "Full name of Airline.")
+    //@Size(max = 100)
+    //@NotBlank
     private String name;
     @Column(name = "airline_short_name", length = 3, nullable = false, unique = true)
+    //@Schema(description = "Short name of Airline.")
+    //@Size(min = 2, max = 3)
+    //@NotBlank
     private String shortName;
     @Column(name = "disabled", nullable = false)
+    //@Schema(description = "Represent if that entity can be used or it disabled in system.")
     private boolean disabled;
 
     @OneToMany(mappedBy = "airline", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonBackReference
+    //@Schema(hidden = true)
     private Set<Flight> flights = Collections.emptySet();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -49,6 +61,7 @@ public class Airline {
                 joinColumns = @JoinColumn(name = "airline"),
                 inverseJoinColumns = @JoinColumn(name = "plane"))
     @JsonIgnoreProperties("airlines")
+    //@Schema(hidden = true)
     private Set<Plane> planes = Collections.emptySet();
 
 

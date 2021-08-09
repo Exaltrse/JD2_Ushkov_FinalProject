@@ -1,6 +1,7 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.Plane;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
@@ -74,6 +75,19 @@ public class PlaneController {
     public Plane findOne(@RequestParam("id") int id) {
 
         return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyname")
+    public Page<Airline> findByName(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByAircraftNumberIsContainingAndDisabledIsFalse(name, page);
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")

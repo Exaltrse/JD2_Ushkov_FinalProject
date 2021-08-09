@@ -1,9 +1,14 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Flight;
 import com.ushkov.domain.FlightPlane;
+import com.ushkov.domain.Plane;
+import com.ushkov.exception.ExistingEntityException;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.FlightPlaneRepositorySD;
+import com.ushkov.repository.springdata.FlightRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -36,6 +41,8 @@ import java.util.List;
 public class FlightPlaneController {
 
     private final FlightPlaneRepositorySD repository;
+    private final PlaneRepositorySD planeRepositorySD;
+    private final FlightRepositorySD flightRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled FlightPlanes entries from DB.",
             notes = "Find all not disabled FlightPlanes entries from DB.",
@@ -54,7 +61,7 @@ public class FlightPlaneController {
     }
 
     @ApiOperation(  value="Find FlightPlane entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
+            notes = "Use ID param of entity for searching of entry in DB. Also search in disabled entities.",
             httpMethod="GET")
     @ApiImplicitParams({
             @ApiImplicitParam(
@@ -74,6 +81,34 @@ public class FlightPlaneController {
     public FlightPlane findOne(@RequestParam("id") int id) {
 
         return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+    }
+
+    @ApiOperation(  value = "Find not disable entries from DB by id of flight and plane.")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entries found successfully.")
+    })
+    @GetMapping("/findbyflightandplane")
+    public List<FlightPlane> findAllByFlightAndPlane(
+            @ApiParam(
+                    name = "flightid",
+                    value = "ID of Flight.",
+                    required = true)
+            @RequestParam
+                    int flightId,
+            @ApiParam(
+                    name = "planeid",
+                    value = "ID of plane.",
+                    required = true)
+            @RequestParam
+                    int planeId,
+            Pageable page) {
+        Flight flight = flightRepositorySD.findById(flightId).orElseThrow(()->new NoSuchEntityException(flightId, Flight.class.getSimpleName()));
+        Plane plane = planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
+        if(repository.existsFlightPlaneByFlightAndPlaneAndDisabledIsFalse(flightId, planeId))
+            throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
+        return repository.findByFlightAndPlaneAndDisabledIsFalse(flight, plane);
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")

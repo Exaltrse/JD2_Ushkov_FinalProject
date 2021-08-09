@@ -1,8 +1,10 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Airport;
 import com.ushkov.domain.Flight;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.AirportRepositorySD;
 import com.ushkov.repository.springdata.FlightRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -36,6 +38,7 @@ import java.util.List;
 public class FlightController {
 
     private final FlightRepositorySD repository;
+    private final AirportRepositorySD airportRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled Flights entries from DB.",
             notes = "Find all not disabled Flights entries from DB.",
@@ -86,6 +89,43 @@ public class FlightController {
     public Page<Flight> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
     }
+
+    @ApiOperation(value = "Find not disables entities by flightnumber or part of it.")
+    @GetMapping("/findbyflightnumber")
+    public Page<Flight> findByFlightNumber(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by flightnumber.",
+                    required = true)
+            @RequestParam
+                    String flightnumber,
+            Pageable page) {
+        return repository.findAllByNumberIsContainingAndDisabledIsFalse(flightnumber, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by airport of departure and arrival.")
+    @GetMapping("/findbydepartureandarrival")
+    public Page<Flight> findByDepartureAndArrival(
+            @ApiParam(
+                    name = "departure",
+                    value = "ID of airport of departure for searching.",
+                    required = true)
+            @RequestParam
+                    short departureAirportId,
+            @ApiParam(
+                    name = "arrival",
+                    value = "ID of airport of arrival for searching.",
+                    required = true)
+            @RequestParam
+                    short arrivalAirportId,
+            Pageable page) {
+        Airport departureAirport = airportRepositorySD.findById(departureAirportId)
+                .orElseThrow(()->new NoSuchEntityException(departureAirportId, Airport.class.getSimpleName()));
+        Airport arrivalAirport = airportRepositorySD.findById(departureAirportId)
+                .orElseThrow(()->new NoSuchEntityException(arrivalAirportId, Airport.class.getSimpleName()));
+        return repository.findAllByDepartureAndDestinationAndDisabledIsFalse(departureAirport, arrivalAirport, page);
+    }
+
 
     @ApiOperation(  value = "Save list of Flight`s entities to DB",
             httpMethod = "POST")

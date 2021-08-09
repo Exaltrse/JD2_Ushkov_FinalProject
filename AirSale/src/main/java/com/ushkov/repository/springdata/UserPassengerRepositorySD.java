@@ -28,4 +28,9 @@ public interface UserPassengerRepositorySD
     Page<UserPassenger> findAllByDisabledIsFalse(Pageable page);
 
     List<UserPassenger> findAllByDisabledIsFalse();
+
+    boolean existsUserPassengerByUserAndPassenger(int userId, long passengerId);
+
+    List<UserPassenger> findAllByUser(int userId);
+
 }

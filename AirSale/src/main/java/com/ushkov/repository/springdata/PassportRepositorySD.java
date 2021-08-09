@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Passenger;
 import com.ushkov.domain.Passport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,14 @@ public interface PassportRepositorySD
     List<Passport> findAllByDisabledIsFalse();
 
     Page<Passport> findAllByDisabledIsFalse(Pageable page);
+
+    Page<Passenger> findAllByFirstNameLatinIsContainingAndDisabledIsFalse(String name, Pageable page);
+
+    Page<Passenger> findAllByLastNameLatinIsContainingAndDisabledIsFalse(String name, Pageable page);
+
+    Page<Passenger> findByFirstNameLatinIsContainingAndLastNameLatinIsContainingAndDisabledIsFalse(String firstName, String lastName, Pageable page);
+
+    Page<Passport> findAllByIdInAndDisabledIsFalse(List<Long> idList, Pageable page);
+
+    Page<Passport> findAllBySeriesContainingAndDisabledIsFalse(String series, Pageable page);
 }

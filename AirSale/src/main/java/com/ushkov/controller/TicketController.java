@@ -1,9 +1,14 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.CurrentFlight;
+import com.ushkov.domain.Passport;
 import com.ushkov.domain.Ticket;
+import com.ushkov.domain.TicketStatus;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
 import com.ushkov.repository.springdata.TicketRepositorySD;
+import com.ushkov.repository.springdata.TicketStatusRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -29,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.SQLException;
 import java.util.List;
 
+
 @Api(tags = "Ticket", value="The Ticket API", description = "The Ticket API")
 @RestController
 @RequestMapping("/ticket")
@@ -36,6 +42,8 @@ import java.util.List;
 public class TicketController {
 
     private final TicketRepositorySD repository;
+    private final CurrentFlightRepositorySD currentFlightRepositorySD;
+    private final TicketStatusRepositorySD ticketStatusRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled Tickets entries from DB.",
             notes = "Find all not disabled Tickets entries from DB.",
@@ -74,6 +82,65 @@ public class TicketController {
     public Ticket findOne(@RequestParam("id") long id) {
 
         return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+    }
+
+    @ApiOperation(value = "Find all entities by passport entity.")
+    @GetMapping("/findbypassport")
+    public Page<Ticket> findByPassport(
+            @ApiParam(
+                    name = "passport",
+                    value = "Passport entity.",
+                    required = true)
+            @RequestParam
+                    Passport entity,
+            Pageable page) {
+        return repository.findAllByPassport(entity, page);
+    }
+
+    @ApiOperation(value = "Find all entities by CurrentFlight.")
+    @GetMapping("/findbycurrentflight")
+    public Page<Ticket> findByCurrentFlight(
+            @ApiParam(
+                    name = "currentflight",
+                    value = "CurrentFlight entity.",
+                    required = true)
+            @RequestParam
+                    CurrentFlight entity,
+            Pageable page) {
+        return repository.findAllByCurrentFlight(entity, page);
+    }
+
+    @ApiOperation(value = "Find all entities by TicketStatus.")
+    @GetMapping("/findbyticketstatus")
+    public Page<Ticket> findByTicketStatus(
+            @ApiParam(
+                    name = "ticketstatus",
+                    value = "TicketStatus entity.",
+                    required = true)
+            @RequestParam
+                    TicketStatus entity,
+            Pageable page) {
+        return repository.findAllByTicketStatus(entity, page);
+    }
+
+    @ApiOperation(value = "Find all entities by TicketStatus and CurrentFlight.")
+    @GetMapping("/findbycurrentflightandticketstatus")
+    public Page<Ticket> findByCurrentFlightAndTicketStatus(
+            @ApiParam(
+                    name = "currentflight",
+                    value = "CurrentFlight entity.",
+                    required = true)
+            @RequestParam
+                    CurrentFlight currentFlightEntity,
+            @ApiParam(
+                    name = "ticketstatus",
+                    value = "TicketStatus entity.",
+                    required = true)
+            @RequestParam
+                    TicketStatus ticketStatusEntity,
+            Pageable page) {
+
+        return repository.findAllByCurrentFlightAndTicketStatusAndDisabledIsFalse(currentFlightEntity, ticketStatusEntity, page);
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
@@ -138,6 +205,38 @@ public class TicketController {
                     required = true)
             @RequestBody Ticket entity) {
         return repository.saveAndFlush(entity);
+    }
+
+    @ApiOperation(  value = "Update All Ticket`s entity status in DB by current flight.",
+            httpMethod = "PUT")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entities updated successfully.",
+                    response = Ticket.class)
+    })
+    @PutMapping("/updateticketstatusbycurrentflight")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    public List<Ticket> updateStatusByCurrentFlight(
+            @ApiParam(
+                    name = "currentflightid",
+                    value = "ID of CurrentFlight for which necessary update status in al not disabled depended tickets.",
+                    required = true)
+            @RequestBody Long currentFlightId,
+            @ApiParam(
+                    name = "ticketstatusid",
+                    value = "ID of TicketStaus which is necessary put in all not disabled Ticket`s entities, that depended of CurrentFlight.",
+                    required = true)
+            @RequestBody Short ticketStatusId,
+            Pageable page) {
+        TicketStatus ticketStatus = ticketStatusRepositorySD.findById(ticketStatusId).orElseThrow(()->new NoSuchEntityException(ticketStatusId, TicketStatus.class.getSimpleName()));
+        List<Ticket> ticketList = repository.findAllByCurrentFlightAndDisabledIsFalse(
+                currentFlightRepositorySD
+                        .findById(currentFlightId)
+                        .orElseThrow(()-> new NoSuchEntityException(currentFlightId, CurrentFlight.class.getSimpleName())));
+        if(ticketList.isEmpty()) throw new NoSuchEntityException("There are no not disabled ticket for CurrentFlight with ID " + currentFlightId);
+        ticketList.forEach(cfre -> cfre.setTicketStatus(ticketStatus));
+        return repository.saveAll(ticketList);
     }
 
 

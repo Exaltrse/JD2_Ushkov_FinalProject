@@ -3,6 +3,7 @@ package com.ushkov.controller;
 
 import com.ushkov.domain.Users;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.RoleRepositorySD;
 import com.ushkov.repository.springdata.UsersRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -36,6 +37,8 @@ import java.util.List;
 public class UsersController {
 
     private final UsersRepositorySD repository;
+    private final RoleRepositorySD roleRepository;
+
 
     @ApiOperation(  value = "Find all not disabled Userss entries from DB.",
             notes = "Find all not disabled Userss entries from DB.",
@@ -85,6 +88,44 @@ public class UsersController {
     @GetMapping("/page")
     public Page<Users> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyloginpart")
+    public Page<Users> findByLoginpart(
+            @ApiParam(
+                    name = "login",
+                    value = "String for searching by login.",
+                    required = true)
+            @RequestParam
+                    String login,
+            Pageable page) {
+        return repository.findAllByLoginIsContainingAndDisabledIsFalse(login, page);
+    }
+
+    @ApiOperation(value = "Find user by full login.")
+    @GetMapping("/findbynamedistinct")
+    public Users findByLoginDistinct(
+            @ApiParam(
+                    name = "login",
+                    value = "String for searching by login.",
+                    required = true)
+            @RequestParam
+            String login){
+        return repository.findByLogin(login);
+    }
+
+    @ApiOperation(value = "Find not disables entities by Roles.")
+    @GetMapping("/findbyroles")
+    public Page<Users> findByShortname(
+            @ApiParam(
+                    name = "role",
+                    value = "ID of role.",
+                    required = true)
+            @RequestParam
+                    short roleId,
+            Pageable page) {
+        return repository.findAllByRole(roleRepository.findById(roleId).orElseThrow(()->new NoSuchEntityException(roleId, "Role")), page);
     }
 
     @ApiOperation(  value = "Save list of Users`s entities to DB",
@@ -139,7 +180,6 @@ public class UsersController {
             @RequestBody Users entity) {
         return repository.saveAndFlush(entity);
     }
-
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @DeleteMapping("/disable")

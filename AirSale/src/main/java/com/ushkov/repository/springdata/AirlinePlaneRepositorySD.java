@@ -28,4 +28,8 @@ public interface AirlinePlaneRepositorySD
     Page<AirlinePlane> findAllByDisabledIsFalse(Pageable page);
 
     List<AirlinePlane> findAllByDisabledIsFalse();
+
+    boolean existsAirlinePlaneByAirlineAndPlaneAndDisabledIsFalse(short airline, long plane);
+
+    List<AirlinePlane> findByAirlineAndPlaneAndDisabledIsFalse(short airline, long plane);
 }

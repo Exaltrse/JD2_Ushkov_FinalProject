@@ -14,6 +14,9 @@ public class NoSuchEntityException extends RuntimeException {
     public NoSuchEntityException(String message) {
         super(message);
     }
+    public NoSuchEntityException(long id, String tableName) {
+        super(Cause.NO_SUCH_ID + id + "in table " + tableName + ".");
+    }
 
 
     public NoSuchEntityException(Throwable cause) {

@@ -1,9 +1,18 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.CurrentFlight;
+import com.ushkov.domain.Plane;
 import com.ushkov.domain.PlaneSeats;
+import com.ushkov.domain.SeatClass;
+import com.ushkov.domain.Ticket;
+import com.ushkov.dto.PlaneSeatsDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 import com.ushkov.repository.springdata.PlaneSeatsRepositorySD;
+import com.ushkov.repository.springdata.SeatClassRepositorySD;
+import com.ushkov.repository.springdata.TicketRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -27,7 +36,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Api(tags = "PlaneSeats", value="The PlaneSeats API", description = "The PlaneSeats API")
 @RestController
@@ -36,6 +48,10 @@ import java.util.List;
 public class PlaneSeatsController {
 
     private final PlaneSeatsRepositorySD repository;
+    private final PlaneRepositorySD planeRepositorySD;
+    private final SeatClassRepositorySD seatClassRepositorySD;
+    private final CurrentFlightRepositorySD currentFlightRepositorySD;
+    private final TicketRepositorySD ticketRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled PlaneSeatss entries from DB.",
             notes = "Find all not disabled PlaneSeatss entries from DB.",
@@ -73,7 +89,8 @@ public class PlaneSeatsController {
     @GetMapping("/id")
     public PlaneSeats findOne(@RequestParam("id") int id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+        return repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
@@ -85,6 +102,83 @@ public class PlaneSeatsController {
     @GetMapping("/page")
     public Page<PlaneSeats> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disabled setas by plane.")
+    @GetMapping("/findbyplane")
+    public List<PlaneSeats> findByPlane(
+            @ApiParam(
+                    name = "plane",
+                    value = "ID of Plane entity.",
+                    required = true)
+            @RequestParam
+                    int entityId) {
+        return repository.findAllByPlaneAndDisabledIsFalse(planeRepositorySD.findById(entityId)
+                .orElseThrow(()->new NoSuchEntityException(entityId,Plane.class.getTypeName())));
+    }
+
+    @ApiOperation(value = "Find not disabled seats by CurrentFlight and actual count of free seats.")
+    @GetMapping("/findbycurrentflight")
+    public List<PlaneSeatsDTO> findByCurrentFlight(
+            @ApiParam(
+                    name = "currentflight",
+                    value = "ID of CurrentFlight entity.",
+                    required = true)
+            @RequestParam
+                    Long entityId) {
+        CurrentFlight currentFlight = currentFlightRepositorySD.findById(entityId).orElseThrow(()->new NoSuchEntityException(entityId, CurrentFlight.class.getSimpleName()));
+        List<Ticket> ticketList = ticketRepositorySD.findAllByCurrentFlight(currentFlight);
+        List<PlaneSeats> planeSeatsList = repository.findAllByPlaneAndDisabledIsFalse(currentFlight.getFlightPlane().getPlane());
+        if(planeSeatsList.isEmpty())
+            throw new NoSuchEntityException("There are no not disabled PlaneSeats entities for that Current Flight Plane");
+        Map<SeatClass, Short> planeSeatsMap = new HashMap<>();
+        for(PlaneSeats pl : planeSeatsList){
+            planeSeatsMap.put(pl.getSeat(), pl.getNumberOfSeats());
+        }
+        if(ticketList.isEmpty())
+            return planeSeatsMap
+                    .entrySet()
+                    .stream()
+                    .map(
+                            p->PlaneSeatsDTO.builder()
+                                    .seatClass(p.getKey())
+                                    .plane(currentFlight.getFlightPlane().getPlane().getId())
+                                    .numberOfSeats((short) 0)
+                                    .build())
+                    .collect(Collectors.toList());
+        ticketList.forEach(tl -> planeSeatsMap.put(tl.getSeat().getSeat(), (short) (planeSeatsMap.get(tl.getSeat().getSeat()) - 1)));
+        return planeSeatsMap.entrySet().stream().map(psm ->
+            new PlaneSeatsDTO()
+                    .builder()
+                    .seatClass(psm.getKey())
+                    .plane(currentFlight.getFlightPlane().getPlane().getId())
+                    .numberOfSeats(psm.getValue())
+                    .build()
+        ).collect(Collectors.toList());
+
+    }
+
+
+
+    @ApiOperation(value = "Find not disabled setas by plane and seat class.")
+    @GetMapping("/findbyplaneandseatclass")
+    public List<PlaneSeats> findByPlaneAndSeatClass(
+            @ApiParam(
+                    name = "plane",
+                    value = "ID of Plane entity.",
+                    required = true)
+            @RequestParam
+                    int planeEntityId,
+            @ApiParam(
+                    name = "seatclass",
+                    value = "ID of SeatClass entity.",
+                    required = true)
+            @RequestParam
+                    short seatClassEntityId) {
+
+        return repository.findByPlaneAndSeatAndDisabledIsFalse(
+                planeRepositorySD.findById(planeEntityId).orElseThrow(()->new NoSuchEntityException(planeEntityId, Plane.class.getTypeName())),
+                seatClassRepositorySD.findById(seatClassEntityId).orElseThrow(()->new NoSuchEntityException(seatClassEntityId, SeatClass.class.getTypeName())));
     }
 
     @ApiOperation(  value = "Save list of PlaneSeats`s entities to DB",

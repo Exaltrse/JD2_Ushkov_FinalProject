@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.List;
 
 @Api(tags = "CurrentFlight", value="The CurrentFlight API", description = "The CurrentFlight API")
@@ -84,7 +85,98 @@ public class CurrentFlightController {
     })
     @GetMapping("/page")
     public Page<CurrentFlight> findAll(Pageable page) {
+
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by departure date.")
+    @GetMapping("/findbydeparture")
+    public Page<CurrentFlight> findByDeparture(
+            @ApiParam(
+                    name = "departurebeginingdate",
+                    value = "Timestamp of departure. From what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp departureBeginingDate,
+            @ApiParam(
+                    name = "departureenddate",
+                    value = "Timestamp of departure. To what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp departureEndDate,
+            @ApiParam(
+                    name = "status",
+                    value = "ID of status of Current Flight.")
+            @RequestParam
+                    Short currentFlightStatus,
+            Pageable page) {
+        return repository.findAllByDepartureDateBetweenAndDisabledIsFalse(departureBeginingDate, departureEndDate, currentFlightStatus, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by arrival date.")
+    @GetMapping("/findbyarrival")
+    public Page<CurrentFlight> findByArrival(
+            @ApiParam(
+                    name = "arrivalbeginingdate",
+                    value = "Timestamp of arrival. From what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp arrivalBeginingDate,
+            @ApiParam(
+                    name = "arrivalenddate",
+                    value = "Timestamp of arrival. To what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp arrivalEndDate,
+            @ApiParam(
+                    name = "status",
+                    value = "ID of status of Current Flight.")
+            @RequestParam
+                    Short currentFlightStatus,
+            Pageable page) {
+        return repository.findAllByArrivalDateBetweenAndDisabledIsFalse(arrivalBeginingDate, arrivalEndDate, currentFlightStatus, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by departure date and Airports of departure and arrival.")
+    @GetMapping("/findbyarrivalandairports")
+    public Page<CurrentFlight> findByDepartureAndAirports(
+            @ApiParam(
+                    name = "departurebeginingdate",
+                    value = "Timestamp of departure. From what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp departureBeginingDate,
+            @ApiParam(
+                    name = "departureenddate",
+                    value = "Timestamp of departure. To what timestamp is searching.",
+                    required = true)
+            @RequestParam
+                    Timestamp departureEndDate,
+            @ApiParam(
+                    name = "departureairportid",
+                    value = "ID of departure airport",
+                    required = true)
+            @RequestParam
+                    Short departureAirportId,
+            @ApiParam(
+                    name = "arrivalairportid",
+                    value = "ID of arrival airport.",
+                    required = true)
+            @RequestParam
+                    Short arrivalAirportId,
+            @ApiParam(
+                    name = "status",
+                    value = "ID of status of Current Flight.")
+            @RequestParam
+                    Short currentFlightStatus,
+            Pageable page) {
+        return repository.findAllByDepartureAndAirports(
+                departureBeginingDate,
+                departureEndDate,
+                departureAirportId,
+                arrivalAirportId,
+                currentFlightStatus,
+                page);
     }
 
     @ApiOperation(  value = "Save list of CurrentFlight`s entities to DB",

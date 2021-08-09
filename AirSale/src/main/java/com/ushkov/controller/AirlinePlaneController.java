@@ -1,9 +1,14 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.AirlinePlane;
+import com.ushkov.domain.Plane;
+import com.ushkov.exception.ExistingEntityException;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
+import com.ushkov.repository.springdata.AirlineRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -36,6 +41,8 @@ import java.util.List;
 public class AirlinePlaneController {
 
     private final AirlinePlaneRepositorySD repository;
+    private final AirlineRepositorySD airlineRepositorySD;
+    private final PlaneRepositorySD planeRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled AirlinePlanes entries from DB.",
             notes = "Find all not disabled AirlinePlanes entries from DB.",
@@ -85,6 +92,34 @@ public class AirlinePlaneController {
     @GetMapping("/page")
     public Page<AirlinePlane> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(  value = "Find not disable entries from DB by id of airline and plane.")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entries found successfully.")
+    })
+    @GetMapping("/findbyairlineandplane")
+    public List<AirlinePlane> findAllByAirlineAndPlane(
+            @ApiParam(
+                    name = "airlineid",
+                    value = "ID of Airlines.",
+                    required = true)
+            @RequestParam
+            short airlineId,
+            @ApiParam(
+                    name = "planeid",
+                    value = "ID of plane.",
+                    required = true)
+            @RequestParam
+            int planeId,
+            Pageable page) {
+        Airline airline = airlineRepositorySD.findById(airlineId).orElseThrow(()->new NoSuchEntityException(airlineId, Airline.class.getSimpleName()));
+        Plane plane = planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
+        if(repository.existsAirlinePlaneByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId))
+            throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
+        return repository.findByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId);
     }
 
     @ApiOperation(  value = "Save list of AirlinePlane`s entities to DB",

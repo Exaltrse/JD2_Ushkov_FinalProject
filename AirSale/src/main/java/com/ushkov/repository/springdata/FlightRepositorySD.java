@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Airport;
 import com.ushkov.domain.Flight;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,8 @@ public interface FlightRepositorySD
     List<Flight> findAllByDisabledIsFalse();
 
     Page<Flight> findAllByDisabledIsFalse(Pageable page);
+
+    Page<Flight> findAllByNumberIsContainingAndDisabledIsFalse(String flightnumber, Pageable page);
+
+    Page<Flight> findAllByDepartureAndDestinationAndDisabledIsFalse(Airport departureAirportId, Airport arrivalAirportId, Pageable page);
 }

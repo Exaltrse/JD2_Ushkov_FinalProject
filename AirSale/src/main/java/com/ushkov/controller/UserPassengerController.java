@@ -1,9 +1,14 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Passenger;
 import com.ushkov.domain.UserPassenger;
+import com.ushkov.domain.Users;
+import com.ushkov.exception.ExistingEntityException;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
 import com.ushkov.repository.springdata.UserPassengerRepositorySD;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -36,6 +41,8 @@ import java.util.List;
 public class UserPassengerController {
 
     private final UserPassengerRepositorySD repository;
+    private final UsersRepositorySD usersRepositorySD;
+    private final PassengerRepositorySD passengerRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled UserPassengers entries from DB.",
             notes = "Find all not disabled UserPassengers entries from DB.",
@@ -140,6 +147,41 @@ public class UserPassengerController {
         return repository.saveAndFlush(entity);
     }
 
+    @ApiOperation(
+            value = "Add UserPassenger`s entity in DB - adding passenger.",
+            notes = "Add UserPassenger`s entity in DB - adding passenger. Passenger entity must be saved in DB.",
+            httpMethod = "PUT")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entities updated successfully.",
+                    response = Users.class)
+    })
+    @PutMapping("/addpassenger")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    public void addPassengerToUser(
+            @ApiParam(
+                    name = "user",
+                    value = "User ID for adding passenger entity",
+                    required = true)
+            @RequestBody
+                    int userId,
+            @ApiParam(
+                    name = "Passenger",
+                    value = "Passenger ID for adding to user",
+                    required = true)
+            @RequestBody
+                    long passengerId) {
+        if(repository.existsUserPassengerByUserAndPassenger(userId, passengerId)) throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
+        passengerRepositorySD.findById(passengerId).orElseThrow(()->new NoSuchEntityException(passengerId, Passenger.class.getSimpleName()));
+        usersRepositorySD.findById(userId).orElseThrow(()->new NoSuchEntityException(userId, Users.class.getSimpleName()));
+        UserPassenger userPassenger = new UserPassenger();
+        userPassenger.setPassenger(passengerId);
+        userPassenger.setUser(userId);
+        userPassenger.setDisabled(false);
+        userPassenger.setExpired(false);
+        repository.save(userPassenger);
+    }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @DeleteMapping("/disable")

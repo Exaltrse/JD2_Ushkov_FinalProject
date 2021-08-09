@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,29 +17,6 @@ public interface AirlineRepositorySD
         PagingAndSortingRepository<Airline, Short>,
         JpaRepository<Airline, Short> {
 
-//    //Find operations
-//    @Query(value = "select a from Airline as a where a.id = :id")
-//    Airline findById(short id);
-//
-//    @Query(value = "select a from Airline as a where lower(a.name) = lower(:name)")
-//    Airline findByName(String name);
-//
-//    @Query(value = "select a from Airline as a where lower(a.shortName) = lower(:shortname)")
-//    Airline findByShortName(String shortname);
-
-//    @Query(value = "select a from Airline as a where a.name like %:name% order by a.name asc")
-//    List<Airline> findAllByName(@Param("name") String name, Pageable pageable);
-//
-//    @Query(value = "select a from Airline  as a where a.shortName like %:shortname% order by a.shortName asc")
-//    List<Airline> findAllByShortName(@Param("shortname") String shortname, Pageable pageable);
-
-    //save operations
-
-
-    //update operations
-
-
-    //delete operations
     @Modifying(flushAutomatically = true)
     @Query(value = "update Airline as a set a.disabled = true where a.id = :id")
     int disableEntity(short id);
@@ -56,4 +34,7 @@ public interface AirlineRepositorySD
     List<Airline> findAllByDisabledIsFalse();
 
     Page<Airline> findAllByDisabledIsFalse(Pageable page);
+
+    @Query(value = "select a from Airline as a where a.id in (select ap from AirlinePlane as ap where ap.plane in :collect) and a.disabled = false")
+    Page<Airline> findAllByPlaneAndDisabledIsFalse(@Param("collect") List<Integer> collect, Pageable page);
 }

@@ -2,8 +2,12 @@ package com.ushkov.controller;
 
 
 import com.ushkov.domain.Passenger;
+import com.ushkov.domain.UserPassenger;
+import com.ushkov.domain.Users;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.PassengerRepositorySD;
+import com.ushkov.repository.springdata.UserPassengerRepositorySD;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Api(tags = "Passenger", value="The Passenger API", description = "The Passenger API")
 @RestController
@@ -36,6 +41,10 @@ import java.util.List;
 public class PassengerController {
 
     private final PassengerRepositorySD repository;
+
+    private final UserPassengerRepositorySD userPassengerRepositorySD;
+
+    private final UsersRepositorySD usersRepositorySD;
 
     @ApiOperation(  value = "Find all not disabled Passengers entries from DB.",
             notes = "Find all not disabled Passengers entries from DB.",
@@ -73,7 +82,68 @@ public class PassengerController {
     @GetMapping("/id")
     public Passenger findOne(@RequestParam("id") long id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(id, "Passenger"));
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyname")
+    public Page<Passenger> findByName(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByFirstNameIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by lastname or part of lastname.")
+    @GetMapping("/findbylastname")
+    public Page<Passenger> findByLastname(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByLastNameIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by firstname and lastname or part of it.")
+    @GetMapping("/findbyfirstandlastname")
+    public Page<Passenger> findByFirstAndLastname(
+            @ApiParam(
+                    name = "firstname",
+                    value = "String for searching by firstname.",
+                    required = true)
+            @RequestParam
+                    String firstName,
+            @ApiParam(
+                    name = "lastname",
+                    value = "String for searching by lastname.",
+                    required = true)
+            @RequestParam
+                    String lastName,
+            Pageable page) {
+        return repository.findByFirstNameIsContainingAndLastNameIsContainingAndDisabledIsFalse(firstName, lastName, page);
+    }
+    @ApiOperation(value = "Find passengers by user.")
+    @GetMapping("/findbyuser")
+    public Page<Passenger> findAllPassengersByUser(
+            @ApiParam(
+                    name = "user",
+                    value = "User entity to search for dependent passenger entities.",
+                    required = true)
+            @RequestParam
+                    Users user,
+            Pageable page){
+        usersRepositorySD.findById(user.getId()).orElseThrow(()->new NoSuchEntityException(user.getId(), "Users"));
+        List<UserPassenger> userPassengerList = userPassengerRepositorySD.findAllByUser(user.getId());
+        if(userPassengerList.isEmpty()) throw new NoSuchEntityException("There is no passengers that depended of user ID " + user.getId() + ".");
+        List<Long> idList = userPassengerList.stream().map(UserPassenger::getPassenger).distinct().collect(Collectors.toList());
+        return repository.findAllByIdInAndDisabledIsFalse(idList, page);
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
@@ -139,7 +209,6 @@ public class PassengerController {
             @RequestBody Passenger entity) {
         return repository.saveAndFlush(entity);
     }
-
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @DeleteMapping("/disable")

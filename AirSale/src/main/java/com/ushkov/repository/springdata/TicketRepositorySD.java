@@ -1,6 +1,9 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.CurrentFlight;
+import com.ushkov.domain.Passport;
 import com.ushkov.domain.Ticket;
+import com.ushkov.domain.TicketStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,4 +31,15 @@ public interface TicketRepositorySD
     List<Ticket> findAllByDisabledIsFalse();
 
     Page<Ticket> findAllByDisabledIsFalse(Pageable page);
+
+    Page<Ticket> findAllByPassport(Passport passport, Pageable pageable);
+
+    Page<Ticket> findAllByCurrentFlight(CurrentFlight currentFlight, Pageable pageable);
+    List<Ticket> findAllByCurrentFlight(CurrentFlight currentFlight);
+
+    Page<Ticket> findAllByTicketStatus(TicketStatus entity, Pageable page);
+
+    Page<Ticket> findAllByCurrentFlightAndTicketStatusAndDisabledIsFalse(CurrentFlight currentFlightEntity, TicketStatus ticketStatusEntity, Pageable page);
+
+    List<Ticket> findAllByCurrentFlightAndDisabledIsFalse(CurrentFlight orElseThrow);
 }

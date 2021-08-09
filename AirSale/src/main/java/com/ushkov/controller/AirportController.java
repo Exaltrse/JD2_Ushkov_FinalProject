@@ -1,6 +1,7 @@
 package com.ushkov.controller;
 
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.Airport;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.AirportRepositorySD;
@@ -85,6 +86,32 @@ public class AirportController {
     @GetMapping("/page")
     public Page<Airport> findAll(Pageable page) {
         return repository.findAllByDisabledIsFalse(page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @GetMapping("/findbyname")
+    public Page<Airline> findByName(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
+    }
+
+    @ApiOperation(value = "Find not disables entities by shortname or part of shortname.")
+    @GetMapping("/findbyshortname")
+    public Page<Airline> findByShortname(
+            @ApiParam(
+                    name = "name",
+                    value = "String for searching by name.",
+                    required = true)
+            @RequestParam
+                    String name,
+            Pageable page) {
+        return repository.findAllByShortNameIsContainingAndDisabledIsFalse(name, page);
     }
 
     @ApiOperation(  value = "Save list of Airport`s entities to DB",

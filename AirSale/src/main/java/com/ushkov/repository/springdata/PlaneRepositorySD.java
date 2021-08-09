@@ -1,5 +1,6 @@
 package com.ushkov.repository.springdata;
 
+import com.ushkov.domain.Airline;
 import com.ushkov.domain.Plane;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,6 @@ public interface PlaneRepositorySD
     Page<Plane> findAllByDisabledIsFalse(Pageable page);
 
     List<Plane> findAllByDisabledIsFalse();
+
+    Page<Airline> findAllByAircraftNumberIsContainingAndDisabledIsFalse(String name, Pageable page);
 }
