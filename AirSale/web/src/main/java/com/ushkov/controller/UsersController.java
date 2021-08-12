@@ -1,9 +1,8 @@
 package com.ushkov.controller;
 
-import com.ushkov.domain.Users;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.RoleRepositorySD;
-import com.ushkov.repository.springdata.UsersRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -26,8 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Users;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.RoleRepositorySD;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 
 @Api(tags = "Users", value="The Users API", description = "The Users API")
 @RestController
@@ -40,8 +41,9 @@ public class UsersController {
 
 
     @ApiOperation(  value = "Find all not disabled Userss entries from DB.",
-            notes = "Find all not disabled Userss entries from DB.",
+            notes = "Find all not disabled Users`s entries from DB.",
             httpMethod = "GET")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
@@ -55,10 +57,11 @@ public class UsersController {
         return repository.findAllByDisabledIsFalse();
     }
 
-    @ApiOperation(  value="Find Users entry from DB by ID.",
+    @ApiOperation(  value="Find User`s entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
     @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header"),
             @ApiImplicitParam(
                     name = "id",
                     value = "Id of Users entry.",
@@ -74,11 +77,12 @@ public class UsersController {
     })
     @GetMapping("/id")
     public Users findOne(@RequestParam("id") int id) {
-
+        //TODO: Check for ROLE_USER and allow to get information only for it ID.
         return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -90,6 +94,7 @@ public class UsersController {
     }
 
     @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyloginpart")
     public Page<Users> findByLoginpart(
             @ApiParam(
@@ -103,6 +108,7 @@ public class UsersController {
     }
 
     @ApiOperation(value = "Find user by full login.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbynamedistinct")
     public Users findByLoginDistinct(
             @ApiParam(
@@ -115,8 +121,9 @@ public class UsersController {
     }
 
     @ApiOperation(value = "Find not disables entities by Roles.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyroles")
-    public Page<Users> findByShortname(
+    public Page<Users> findAllByRole(
             @ApiParam(
                     name = "role",
                     value = "ID of role.",
@@ -129,6 +136,7 @@ public class UsersController {
 
     @ApiOperation(  value = "Save list of Users`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -147,6 +155,7 @@ public class UsersController {
 
     @ApiOperation(  value = "Save one Users`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -164,6 +173,7 @@ public class UsersController {
 
     @ApiOperation(  value = "Update Users`s entity in DB.",
             httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -181,16 +191,30 @@ public class UsersController {
     }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(int id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody int id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Integer> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Integer> idList){
         repository.disableEntities(idList);
     }
 }

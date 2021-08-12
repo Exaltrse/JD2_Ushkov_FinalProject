@@ -1,13 +1,13 @@
 package com.ushkov.security.configuration;
 
 
-import com.ushkov.security.filter.AuthenticationTokenFilter;
-import com.ushkov.security.util.TokenUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -18,19 +18,24 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.ushkov.beans.HierarchyConfig;
+import com.ushkov.security.filter.AuthenticationTokenFilter;
+import com.ushkov.security.util.TokenUtils;
 
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userProvider;
-
     private final TokenUtils tokenUtils;
     //TODO: I know that i must change provider.
     private final NoOpPasswordEncoder noOpPasswordEncoder;
+    private final HierarchyConfig hierarchyConfig;
 
     @Bean
     @Override
@@ -52,6 +57,21 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         return authenticationTokenFilter;
     }
 
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy(hierarchyConfig.getHierarchy());
+        return roleHierarchy;
+    }
+
+
+    @Bean
+    public DefaultWebSecurityExpressionHandler webSecurityExpressionHandler() {
+        DefaultWebSecurityExpressionHandler expressionHandler = new DefaultWebSecurityExpressionHandler();
+        expressionHandler.setRoleHierarchy(roleHierarchy());
+        return expressionHandler;
+    }
+
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         //TODO: Configure.
@@ -69,18 +89,18 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/actuator/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/swagger-ui.html#").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                //.antMatchers("/guest/**").permitAll()
-                //.antMatchers("/registration/**").permitAll()
+                .antMatchers("/guest/**").permitAll()
+                .antMatchers("/registration/**").permitAll()
                 //.antMatchers("/hibernate/**").permitAll()
-                .antMatchers("/authentication/**").permitAll()
+                .antMatchers("/authentication/**").permitAll();
                 //.antMatchers("/rest/**").permitAll()
                 //.antMatchers("/admin/**").hasRole("ADMIN")
                 //.antMatchers("/**").permitAll()
-                .antMatchers(HttpMethod.DELETE).hasRole("ADMIN")
-                .antMatchers(HttpMethod.PUT).hasRole("MANAGER")
-                .antMatchers(HttpMethod.POST).hasRole("MANAGER")
-                .antMatchers(HttpMethod.GET).permitAll()
-                .anyRequest().authenticated();
+                //.antMatchers(HttpMethod.DELETE).hasRole("ADMIN")
+                //.antMatchers(HttpMethod.PUT).hasRole("MANAGER")
+                //.antMatchers(HttpMethod.POST).hasRole("MANAGER")
+                //.antMatchers(HttpMethod.GET).permitAll()
+                //.anyRequest().permitAll();
 
         // Custom JWT based authentication
         httpSecurity
@@ -93,4 +113,5 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         web.ignoring()
                 .antMatchers("/v2/api-docs", "/configuration/ui/**", "/swagger-resources/**", "/configuration/security/**", "/swagger-ui.html", "/webjars/**");
     }
+
 }

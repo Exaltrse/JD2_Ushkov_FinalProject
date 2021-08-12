@@ -1,15 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Passenger;
-import com.ushkov.domain.PassengerPassport;
-import com.ushkov.domain.Passport;
-import com.ushkov.domain.Users;
-import com.ushkov.exception.ExistingEntityException;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
-import com.ushkov.repository.springdata.PassengerRepositorySD;
-import com.ushkov.repository.springdata.PassportRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -32,8 +26,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Passenger;
+import com.ushkov.domain.PassengerPassport;
+import com.ushkov.domain.Passport;
+import com.ushkov.domain.Users;
+import com.ushkov.exception.ExistingEntityException;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
+import com.ushkov.repository.springdata.PassportRepositorySD;
 
 @Api(tags = "PassengerPassport", value="The PassengerPassport API", description = "The PassengerPassport API")
 @RestController
@@ -180,22 +181,34 @@ public class PassengerPassportController {
         PassengerPassport passengerPassport = new PassengerPassport();
         passengerPassport.setPassenger(passengerId);
         passengerPassport.setPassport(passportId);
-        passengerPassport.setExpired(false);
         passengerPassport.setDisabled(false);
         repository.save(passengerPassport);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(long id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody long id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Long> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Long> idList){
         repository.disableEntities(idList);
     }
 }

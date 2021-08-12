@@ -1,14 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.domain.AirlinePlane;
-import com.ushkov.domain.Plane;
-import com.ushkov.exception.ExistingEntityException;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
-import com.ushkov.repository.springdata.AirlineRepositorySD;
-import com.ushkov.repository.springdata.PlaneRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -31,8 +26,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Airline;
+import com.ushkov.domain.AirlinePlane;
+import com.ushkov.domain.Plane;
+import com.ushkov.exception.ExistingEntityException;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
+import com.ushkov.repository.springdata.AirlineRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 
 @Api(tags = "AirlinePlane", value="The AirlinePlane API", description = "The AirlinePlane API")
 @RestController
@@ -80,7 +81,8 @@ public class AirlinePlaneController {
     @GetMapping("/id")
     public AirlinePlane findOne(@RequestParam("id") Long id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
+        return repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
@@ -124,6 +126,7 @@ public class AirlinePlaneController {
 
     @ApiOperation(  value = "Save list of AirlinePlane`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -142,6 +145,7 @@ public class AirlinePlaneController {
 
     @ApiOperation(  value = "Save one AirlinePlane`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -159,6 +163,7 @@ public class AirlinePlaneController {
 
     @ApiOperation(  value = "Update AirlinePlane`s entity in DB.",
             httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -177,16 +182,29 @@ public class AirlinePlaneController {
 
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(Long id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody Long id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Long> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Long> idList){
         repository.disableEntities(idList);
     }
 }

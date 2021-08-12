@@ -1,10 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.domain.Airport;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.AirportRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -27,8 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Airline;
+import com.ushkov.domain.Airport;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.AirportRepositorySD;
 
 @Api(tags = "Airport", value="The Airport API", description = "The Airport API")
 @RestController
@@ -116,6 +117,7 @@ public class AirportController {
 
     @ApiOperation(  value = "Save list of Airport`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -134,6 +136,7 @@ public class AirportController {
 
     @ApiOperation(  value = "Save one Airport`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -151,6 +154,7 @@ public class AirportController {
 
     @ApiOperation(  value = "Update Airport`s entity in DB.",
             httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -169,16 +173,29 @@ public class AirportController {
 
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(Short id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody Short id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Short> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Short> idList){
         repository.disableEntities(idList);
     }
 }

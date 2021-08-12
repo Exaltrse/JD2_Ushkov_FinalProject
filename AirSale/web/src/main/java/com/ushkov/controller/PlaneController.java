@@ -1,10 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.domain.Plane;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.PlaneRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -27,8 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Plane;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
 
 @Api(tags = "Plane", value="The Plane API", description = "The Plane API")
 @RestController
@@ -79,7 +79,7 @@ public class PlaneController {
 
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
-    public Page<Airline> findByName(
+    public Page<Plane> findByName(
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -103,6 +103,7 @@ public class PlaneController {
 
     @ApiOperation(  value = "Save list of Plane`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -121,6 +122,7 @@ public class PlaneController {
 
     @ApiOperation(  value = "Save one Plane`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -138,6 +140,7 @@ public class PlaneController {
 
     @ApiOperation(  value = "Update Plane`s entity in DB.",
             httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -156,16 +159,29 @@ public class PlaneController {
 
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(int id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody int id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Integer> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Integer> idList){
         repository.disableEntities(idList);
     }
 }

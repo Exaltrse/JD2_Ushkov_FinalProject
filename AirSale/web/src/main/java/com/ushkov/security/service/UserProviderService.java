@@ -1,8 +1,8 @@
 package com.ushkov.security.service;
 
 
-import com.ushkov.domain.Users;
-import com.ushkov.repository.imlp.UserRepository;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,13 +10,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import com.ushkov.domain.Users;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 
 @Service
 @RequiredArgsConstructor
 public class UserProviderService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UsersRepositorySD userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

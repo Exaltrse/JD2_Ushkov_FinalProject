@@ -1,14 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Passenger;
-import com.ushkov.domain.UserPassenger;
-import com.ushkov.domain.Users;
-import com.ushkov.exception.ExistingEntityException;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.PassengerRepositorySD;
-import com.ushkov.repository.springdata.UserPassengerRepositorySD;
-import com.ushkov.repository.springdata.UsersRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -31,8 +26,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Passenger;
+import com.ushkov.domain.UserPassenger;
+import com.ushkov.domain.Users;
+import com.ushkov.exception.ExistingEntityException;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
+import com.ushkov.repository.springdata.UserPassengerRepositorySD;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 
 @Api(tags = "UserPassenger", value="The UserPassenger API", description = "The UserPassenger API")
 @RestController
@@ -179,21 +180,33 @@ public class UserPassengerController {
         userPassenger.setPassenger(passengerId);
         userPassenger.setUser(userId);
         userPassenger.setDisabled(false);
-        userPassenger.setExpired(false);
         repository.save(userPassenger);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(long id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody long id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Long> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Long> idList){
         repository.disableEntities(idList);
     }
 }

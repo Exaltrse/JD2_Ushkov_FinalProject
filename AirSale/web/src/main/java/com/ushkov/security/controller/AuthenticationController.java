@@ -1,9 +1,7 @@
 package com.ushkov.security.controller;
 
 
-import com.ushkov.security.requests.AuthRequest;
-import com.ushkov.security.requests.AuthResponse;
-import com.ushkov.security.util.TokenUtils;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -19,6 +17,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ushkov.security.requests.AuthRequest;
+import com.ushkov.security.requests.AuthResponse;
+import com.ushkov.security.util.TokenUtils;
+
+@Api(tags = "Authentication", value="The authentication API", description = "The authentication API")
 @RestController
 @RequestMapping("/authentication")
 @RequiredArgsConstructor

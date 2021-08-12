@@ -1,13 +1,10 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Passenger;
-import com.ushkov.domain.PassengerPassport;
-import com.ushkov.domain.Passport;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
-import com.ushkov.repository.springdata.PassengerRepositorySD;
-import com.ushkov.repository.springdata.PassportRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -30,9 +27,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.ushkov.domain.Passenger;
+import com.ushkov.domain.PassengerPassport;
+import com.ushkov.domain.Passport;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
+import com.ushkov.repository.springdata.PassengerRepositorySD;
+import com.ushkov.repository.springdata.PassportRepositorySD;
 
 @Api(tags = "Passport", value="The Passport API", description = "The Passport API")
 @RestController
@@ -47,6 +48,7 @@ public class PassportController {
     @ApiOperation(  value = "Find all not disabled Passports entries from DB.",
             notes = "Find all not disabled Passports entries from DB.",
             httpMethod = "GET")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
@@ -63,6 +65,8 @@ public class PassportController {
     @ApiOperation(  value="Find Passport entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @ApiImplicitParams({
             @ApiImplicitParam(
                     name = "id",
@@ -84,6 +88,7 @@ public class PassportController {
     }
 
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -95,6 +100,7 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Find not disables entities by name or part of name.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyname")
     public Page<Passenger> findByName(
             @ApiParam(
@@ -108,6 +114,7 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Find not disables entities by lastname or part of lastname.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbylastname")
     public Page<Passenger> findByLastname(
             @ApiParam(
@@ -121,6 +128,7 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Find not disables entities by firstname and lastname or part of it.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyfirstandlastname")
     public Page<Passenger> findByFirstAndLastname(
             @ApiParam(
@@ -140,6 +148,8 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Find passports by passenger.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @GetMapping("/findbypassenger")
     public Page<Passport> findAllPassportsByPassenger(
             @ApiParam(
@@ -157,6 +167,7 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Find passports by it series.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyseries")
     public Page<Passport> findAllPassportsBySeries(
             @ApiParam(
@@ -171,6 +182,7 @@ public class PassportController {
 
     @ApiOperation(  value = "Save list of Passport`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -189,6 +201,8 @@ public class PassportController {
 
     @ApiOperation(  value = "Save one Passport`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -206,6 +220,8 @@ public class PassportController {
 
     @ApiOperation(  value = "Update Passport`s entity in DB.",
             httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -223,16 +239,30 @@ public class PassportController {
     }
 
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(long id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody long id){
         repository.disableEntity(id);
     }
 
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Long> idList){
+    public void disableOne(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Long> idList){
         repository.disableEntities(idList);
     }
 }

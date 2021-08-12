@@ -1,11 +1,9 @@
 package com.ushkov.controller;
 
 
-import com.ushkov.domain.Airline;
-import com.ushkov.exception.NoSuchEntityException;
-import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
-import com.ushkov.repository.springdata.AirlineRepositorySD;
-import com.ushkov.repository.springdata.PlaneRepositorySD;
+import java.sql.SQLException;
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -16,6 +14,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,19 +27,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.sql.SQLException;
-import java.util.List;
+import com.ushkov.domain.Airline;
+import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.repository.springdata.AirlineRepositorySD;
+import com.ushkov.repository.springdata.PlaneRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
 @Api(tags = "Airline", value="The Airline API", description = "The Airline API")
 @RestController
 @RequestMapping("/airline")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
 public class AirlineController {
 
     private final AirlineRepositorySD repository;
     private final PlaneRepositorySD planeRepositorySD;
-    private final AirlinePlaneRepositorySD airlinePlaneRepositorySD;
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disabled Airlines entries from DB.",
                     notes = "Find all not disabled Airlines entries from DB.",
                     httpMethod = "GET")
@@ -57,6 +60,7 @@ public class AirlineController {
         return repository.findAllByDisabledIsFalse();
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find Airline entry from DB by ID.",
                     notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
                     httpMethod="GET")
@@ -80,6 +84,7 @@ public class AirlineController {
         return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
     @ApiResponses({
             @ApiResponse(
@@ -91,6 +96,7 @@ public class AirlineController {
         return repository.findAllByDisabledIsFalse(page);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
     public Page<Airline> findByName(
@@ -104,6 +110,7 @@ public class AirlineController {
         return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by shortname or part of shortname.")
     @GetMapping("/findbyshortname")
     public Page<Airline> findByShortname(
@@ -117,6 +124,7 @@ public class AirlineController {
         return repository.findAllByShortNameIsContainingAndDisabledIsFalse(name, page);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by planes.")
     @GetMapping("/findbyplanes")
     public Page<Airline> findByPlanes(
@@ -133,8 +141,10 @@ public class AirlineController {
                 page);
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save list of Airline`s entities to DB",
                     httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -151,14 +161,16 @@ public class AirlineController {
         return repository.saveAll(entities);
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save one Airline`s entity to DB",
                     httpMethod = "POST")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
+    @PostMapping()
     public Airline saveOne(
             @ApiParam(
                     name = "entity",
@@ -168,15 +180,17 @@ public class AirlineController {
         return repository.save(entity);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(  value = "Update Airline`s entity in DB.",
                     httpMethod = "PUT")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
                     response = Airline.class)
     })
-    @PutMapping("/put")
+    @PutMapping()
     public Airline updateOne(
             @ApiParam(
                     name = "entity",
@@ -186,18 +200,32 @@ public class AirlineController {
         return repository.saveAndFlush(entity);
     }
 
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
-    @DeleteMapping("/disable")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(Short id){
+    public void disableOne(
+            @ApiParam(
+                    name = "id",
+                    value = "ID of entity for disabling.",
+                    required = true)
+            @RequestBody Short id){
             repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(List<Short> idList){
+    public void disableAll(
+            @ApiParam(
+                    name = "listid",
+                    value = "List of ID of entities for disabling.",
+                    required = true
+            )
+            @RequestBody List<Short> idList){
         repository.disableEntities(idList);
     }
 }
