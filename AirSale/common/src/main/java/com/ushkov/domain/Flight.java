@@ -1,11 +1,7 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -18,8 +14,15 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.Collections;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "flight")
@@ -46,8 +49,6 @@ public class Flight {
     @JoinColumn(name = "airport_destination", nullable = false)
     @JsonManagedReference
     private Airport destination;
-    @Column(name = "is_expired", nullable = false)
-    private boolean isExpired;
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 
@@ -58,10 +59,12 @@ public class Flight {
 //    @JsonIgnoreProperties("flights")
 //    private Set<Plane> planes = Collections.emptySet();
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<CurrentFlight> currentFlights = Collections.emptySet();
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<FlightPlane> flightPlanes = Collections.emptySet();

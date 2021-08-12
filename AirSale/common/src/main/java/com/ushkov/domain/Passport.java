@@ -1,12 +1,8 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -21,9 +17,16 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "passport")
@@ -51,6 +54,7 @@ public class Passport {
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable( name = "passenger_passport",
             joinColumns = @JoinColumn(name = "passport"),
@@ -58,6 +62,7 @@ public class Passport {
     @JsonIgnoreProperties("passports")
     private Set<Passenger> passengers = Collections.emptySet();
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(mappedBy = "passport", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();

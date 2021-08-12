@@ -1,11 +1,7 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -17,8 +13,15 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.util.Collections;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "passenger")
@@ -44,10 +47,12 @@ public class Passenger {
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("passengers")
     private Set<Users> users = Collections.emptySet();
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("passengers")
     private Set<Passport> passports = Collections.emptySet();

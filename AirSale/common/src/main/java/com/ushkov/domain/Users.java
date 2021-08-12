@@ -1,11 +1,7 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,8 +14,17 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.util.Collections;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "users")
@@ -43,10 +48,16 @@ public class Users {
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable( name = "user_passenger",
-            joinColumns = @JoinColumn(name = "user"),
+            joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "passenger"))
     @JsonIgnoreProperties("users")
     private Set<Passenger> passengers = Collections.emptySet();
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this, ToStringStyle.JSON_STYLE);
+    }
 }

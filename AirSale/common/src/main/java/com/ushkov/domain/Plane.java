@@ -1,13 +1,8 @@
 package com.ushkov.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -19,8 +14,16 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.Collections;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "plane")
@@ -40,6 +43,7 @@ public class Plane {
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @ManyToMany(mappedBy = "planes", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("planes")
     private Set<Airline> airlines = Collections.emptySet();
@@ -48,11 +52,12 @@ public class Plane {
 //    @JsonIgnoreProperties("planes")
 //    private Set<Flight> flights = Collections.emptySet();
 
+    @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<PlaneSeats> planeSeats = Collections.emptySet();
 
-
+    @NotFound(action = NotFoundAction.IGNORE)
     @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JsonManagedReference
     private Set<FlightPlane> flightPlanes = Collections.emptySet();

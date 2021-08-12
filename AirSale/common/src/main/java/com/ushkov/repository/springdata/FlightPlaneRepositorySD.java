@@ -1,8 +1,7 @@
 package com.ushkov.repository.springdata;
 
-import com.ushkov.domain.Flight;
-import com.ushkov.domain.FlightPlane;
-import com.ushkov.domain.Plane;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
-import java.util.List;
+import com.ushkov.domain.Flight;
+import com.ushkov.domain.FlightPlane;
+import com.ushkov.domain.Plane;
 
 public interface FlightPlaneRepositorySD
         extends CrudRepository<FlightPlane, Integer>,
@@ -34,4 +35,8 @@ public interface FlightPlaneRepositorySD
     boolean existsFlightPlaneByFlightAndPlaneAndDisabledIsFalse(Integer flightEntityId, Integer planeEntityId);
 
     List<FlightPlane> findByFlightAndPlaneAndDisabledIsFalse(Flight flightEntity, Plane planeEntity);
+
+    List<FlightPlane> findAllByPlane(Plane plane);
+
+    List<FlightPlane> findAllByFlight(Flight flight);
 }
