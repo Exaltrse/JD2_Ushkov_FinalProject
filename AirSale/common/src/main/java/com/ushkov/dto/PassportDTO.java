@@ -11,7 +11,6 @@ import javax.validation.constraints.Size;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -24,7 +23,6 @@ import com.ushkov.validation.ValidationGroup.NewObject;
 @NoArgsConstructor
 @EqualsAndHashCode
 @Validated
-@Builder
 @ApiModel(description = "Entity, that represent Passport.")
 public class PassportDTO {
 
