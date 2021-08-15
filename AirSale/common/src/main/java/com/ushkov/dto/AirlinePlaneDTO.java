@@ -41,8 +41,8 @@ public class AirlinePlaneDTO {
             position = 1)
     @NotNull(message = "ID of Plane entity can`t be NULL.")
     @Min(value = 1, message = "ID of Plane entity must be positive number.")
-    @Max(value = Long.MAX_VALUE, message = "Max value of ID of Plane entity can be " + Long.MAX_VALUE + ".")
-    private Long plane;
+    @Max(value = Integer.MAX_VALUE, message = "Max value of ID of Plane entity can be " + Integer.MAX_VALUE + ".")
+    private Integer plane;
 
     @ApiModelProperty(
             value = "ID of Airline entity.",

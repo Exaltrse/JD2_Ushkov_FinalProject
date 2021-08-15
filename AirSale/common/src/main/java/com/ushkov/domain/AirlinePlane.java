@@ -24,9 +24,9 @@ public class AirlinePlane {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "plane", nullable = false)
-    private long plane;
+    private Integer plane;
     @Column(name = "airline", nullable = false)
-    private short airline;
+    private Short airline;
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
 }

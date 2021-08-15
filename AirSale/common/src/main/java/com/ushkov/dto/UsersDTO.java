@@ -68,7 +68,7 @@ public class UsersDTO {
     @ApiModelProperty(
             value = "Represents if that entity can be used or it lost it actuality and disabled in system.",
             required = true,
-            position = 3)
+            position = 4)
     @NotNull(message = "Disabled flag of Users entity can`t be NULL.")
     private boolean disabled;
 

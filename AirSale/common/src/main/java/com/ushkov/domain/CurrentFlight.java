@@ -54,7 +54,6 @@ public class CurrentFlight {
     private CurrentFlightStatus currentFlightsStatus;
     @Column(name = "disabled", nullable = false)
     private boolean disabled;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "flight", nullable = false)
     @JsonBackReference
