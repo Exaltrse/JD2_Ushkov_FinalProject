@@ -1,7 +1,7 @@
 package com.ushkov.repository.springdata;
 
-import com.ushkov.domain.Airline;
-import com.ushkov.domain.SeatClass;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
-import java.util.List;
+import com.ushkov.domain.SeatClass;
 
 public interface SeatClassRepositorySD
         extends CrudRepository<SeatClass, Short>,
@@ -30,5 +30,5 @@ public interface SeatClassRepositorySD
 
     List<SeatClass> findAllByDisabledIsFalse();
 
-    Page<Airline> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
+    Page<SeatClass> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 }

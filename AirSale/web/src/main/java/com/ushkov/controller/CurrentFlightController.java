@@ -4,6 +4,7 @@ package com.ushkov.controller;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -15,30 +16,39 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.CurrentFlight;
+import com.ushkov.dto.CurrentFlightDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.CurrentFlightMapper;
 import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
 @Api(tags = "CurrentFlight", value="The CurrentFlight API", description = "The CurrentFlight API")
 @RestController
 @RequestMapping("/currentflight")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class CurrentFlightController {
 
     private final CurrentFlightRepositorySD repository;
+    private final CurrentFlightMapper mapper;
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disabled CurrentFlights entries from DB.",
             notes = "Find all not disabled CurrentFlights entries from DB.",
             httpMethod = "GET")
@@ -46,15 +56,16 @@ public class CurrentFlightController {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=CurrentFlight.class,
+                    response=CurrentFlightDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<CurrentFlight> findAll() {
+    public List<CurrentFlightDTO> findAll() {
 
-        return repository.findAllByDisabledIsFalse();
+        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find CurrentFlight entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
@@ -70,14 +81,18 @@ public class CurrentFlightController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = CurrentFlight.class)
+                    response = CurrentFlightDTO.class)
     })
     @GetMapping("/id")
-    public CurrentFlight findOne(@RequestParam("id") Long id) {
+    public CurrentFlightDTO findOne(@RequestParam("id") Long id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
+        return mapper.map(
+                repository
+                        .findById(id)
+                        .orElseThrow(()-> new NoSuchEntityException(id, CurrentFlight.class.getSimpleName())));
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
     @ApiResponses({
             @ApiResponse(
@@ -85,14 +100,15 @@ public class CurrentFlightController {
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<CurrentFlight> findAll(Pageable page) {
+    public Page<CurrentFlightDTO> findAll(Pageable page) {
 
-        return repository.findAllByDisabledIsFalse(page);
+        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date.")
     @GetMapping("/findbydeparture")
-    public Page<CurrentFlight> findByDeparture(
+    public Page<CurrentFlightDTO> findByDeparture(
             @ApiParam(
                     name = "departurebeginingdate",
                     value = "Timestamp of departure. From what timestamp is searching.",
@@ -111,12 +127,19 @@ public class CurrentFlightController {
             @RequestParam
                     Short currentFlightStatus,
             Pageable page) {
-        return repository.findAllByDepartureDateBetweenAndDisabledIsFalse(departureBeginingDate, departureEndDate, currentFlightStatus, page);
+        return repository
+                .findAllByDepartureDateBetweenAndDisabledIsFalse(
+                        departureBeginingDate,
+                        departureEndDate,
+                        currentFlightStatus,
+                        page
+                ).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by arrival date.")
     @GetMapping("/findbyarrival")
-    public Page<CurrentFlight> findByArrival(
+    public Page<CurrentFlightDTO> findByArrival(
             @ApiParam(
                     name = "arrivalbeginingdate",
                     value = "Timestamp of arrival. From what timestamp is searching.",
@@ -135,12 +158,19 @@ public class CurrentFlightController {
             @RequestParam
                     Short currentFlightStatus,
             Pageable page) {
-        return repository.findAllByArrivalDateBetweenAndDisabledIsFalse(arrivalBeginingDate, arrivalEndDate, currentFlightStatus, page);
+        return repository
+                .findAllByArrivalDateBetweenAndDisabledIsFalse(
+                        arrivalBeginingDate,
+                        arrivalEndDate,
+                        currentFlightStatus,
+                        page
+                ).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date and Airports of departure and arrival.")
     @GetMapping("/findbyarrivalandairports")
-    public Page<CurrentFlight> findByDepartureAndAirports(
+    public Page<CurrentFlightDTO> findByDepartureAndAirports(
             @ApiParam(
                     name = "departurebeginingdate",
                     value = "Timestamp of departure. From what timestamp is searching.",
@@ -177,9 +207,11 @@ public class CurrentFlightController {
                 departureAirportId,
                 arrivalAirportId,
                 currentFlightStatus,
-                page);
+                page
+        ).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save list of CurrentFlight`s entities to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -190,15 +222,17 @@ public class CurrentFlightController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<CurrentFlight> saveAll(
+    public List<CurrentFlightDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of CurrentFlight`s entities for update",
                     required = true)
-            @RequestBody List<CurrentFlight> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<CurrentFlightDTO> entities) {
+        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
+                .stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save one CurrentFlight`s entity to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -207,16 +241,17 @@ public class CurrentFlightController {
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
-    public CurrentFlight saveOne(
+    @PostMapping()
+    public CurrentFlightDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody CurrentFlight entity) {
-        return repository.save(entity);
+            @RequestBody CurrentFlightDTO entity) {
+        return mapper.map(repository.save(mapper.map(entity)));
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(  value = "Update CurrentFlight`s entity in DB.",
             httpMethod = "PUT")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -224,22 +259,22 @@ public class CurrentFlightController {
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = CurrentFlight.class)
+                    response = CurrentFlightDTO.class)
     })
-    @PutMapping("/put")
-    public CurrentFlight updateOne(
+    @PatchMapping()
+    public CurrentFlightDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody CurrentFlight entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody CurrentFlightDTO entity) {
+        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
     }
 
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @DeleteMapping("/disable")
+    @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
             @ApiParam(
@@ -250,6 +285,7 @@ public class CurrentFlightController {
         repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")

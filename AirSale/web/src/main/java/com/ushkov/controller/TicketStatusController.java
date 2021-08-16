@@ -3,6 +3,7 @@ package com.ushkov.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -14,31 +15,39 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ushkov.domain.Airline;
 import com.ushkov.domain.TicketStatus;
+import com.ushkov.dto.TicketStatusDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.TicketStatusMapper;
 import com.ushkov.repository.springdata.TicketStatusRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
 @Api(tags = "TicketStatus", value="The TicketStatus API", description = "The TicketStatus API")
 @RestController
 @RequestMapping("/ticketstatus")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class TicketStatusController {
 
     private final TicketStatusRepositorySD repository;
+    private final TicketStatusMapper mapper;
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disabled TicketStatuss entries from DB.",
             notes = "Find all not disabled TicketStatuss entries from DB.",
             httpMethod = "GET")
@@ -46,15 +55,16 @@ public class TicketStatusController {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=TicketStatus.class,
+                    response=TicketStatusDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<TicketStatus> findAll() {
+    public List<TicketStatusDTO> findAll() {
 
-        return repository.findAllByDisabledIsFalse();
+        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find TicketStatus entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
@@ -70,14 +80,16 @@ public class TicketStatusController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = TicketStatus.class)
+                    response = TicketStatusDTO.class)
     })
     @GetMapping("/id")
-    public TicketStatus findOne(@RequestParam("id") Short id) {
+    public TicketStatusDTO findOne(@RequestParam("id") Short id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+        return mapper.map(repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(id, TicketStatus.class.getSimpleName())));
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
     @ApiResponses({
             @ApiResponse(
@@ -85,13 +97,14 @@ public class TicketStatusController {
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<TicketStatus> findAll(Pageable page) {
-        return repository.findAllByDisabledIsFalse(page);
+    public Page<TicketStatusDTO> findAll(Pageable page) {
+        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
-    public Page<Airline> findByName(
+    public Page<TicketStatusDTO> findByName(
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -99,9 +112,10 @@ public class TicketStatusController {
             @RequestParam
                     String name,
             Pageable page) {
-        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
+        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(  value = "Save list of TicketStatus`s entities to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -112,15 +126,17 @@ public class TicketStatusController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<TicketStatus> saveAll(
+    public List<TicketStatusDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of TicketStatus`s entities for update",
                     required = true)
-            @RequestBody List<TicketStatus> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<TicketStatusDTO> entities) {
+        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
+                .stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(  value = "Save one TicketStatus`s entity to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -129,36 +145,36 @@ public class TicketStatusController {
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
-    public TicketStatus saveOne(
+    @PostMapping()
+    public TicketStatusDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody TicketStatus entity) {
-        return repository.save(entity);
+            @RequestBody TicketStatusDTO entity) {
+        return mapper.map(repository.save(mapper.map(entity)));
     }
 
-    @ApiOperation(  value = "Update TicketStatus`s entity in DB.",
-            httpMethod = "PUT")
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
+    @ApiOperation(  value = "Update TicketStatus`s entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = TicketStatus.class)
+                    response = TicketStatusDTO.class)
     })
-    @PutMapping("/put")
-    public TicketStatus updateOne(
+    @PatchMapping()
+    public TicketStatusDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody TicketStatus entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody TicketStatusDTO entity) {
+        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
     }
 
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
@@ -172,6 +188,7 @@ public class TicketStatusController {
         repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")

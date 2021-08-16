@@ -3,6 +3,7 @@ package com.ushkov.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -14,37 +15,43 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ushkov.domain.Airline;
 import com.ushkov.domain.AirlinePlane;
-import com.ushkov.domain.Plane;
-import com.ushkov.exception.ExistingEntityException;
+import com.ushkov.dto.AirlinePlaneDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.AirlinePlaneMapper;
 import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
-@Api(tags = "AirlinePlane", value="The AirlinePlane API", description = "The AirlinePlane API")
+@Api(tags = "AirlinePlane", value="The AirlinePlane API", description = "The AirlinePlane API. For admins only.")
 @RestController
 @RequestMapping("/airlineplane")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class AirlinePlaneController {
 
     private final AirlinePlaneRepositorySD repository;
     private final AirlineRepositorySD airlineRepositorySD;
     private final PlaneRepositorySD planeRepositorySD;
+    private final AirlinePlaneMapper mapper;
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disabled AirlinePlanes entries from DB.",
             notes = "Find all not disabled AirlinePlanes entries from DB.",
             httpMethod = "GET")
@@ -52,15 +59,16 @@ public class AirlinePlaneController {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=AirlinePlane.class,
+                    response=AirlinePlaneDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<AirlinePlane> findAll() {
+    public List<AirlinePlaneDTO> findAll() {
 
-        return repository.findAllByDisabledIsFalse();
+        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value="Find AirlinePlane entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
@@ -70,40 +78,46 @@ public class AirlinePlaneController {
                     value = "Id of AirlinePlane entry.",
                     required = true,
                     dataType = "string",
-                    paramType = "query")
+                    paramType = "query"),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = AirlinePlane.class)
+                    response = AirlinePlaneDTO.class)
     })
     @GetMapping("/id")
-    public AirlinePlane findOne(@RequestParam("id") Long id) {
+    public AirlinePlaneDTO findOne(@RequestParam("id") Long id) {
 
-        return repository.findById(id)
-                .orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
+        return mapper.map(repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(id, AirlinePlane.class.getSimpleName())));
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<AirlinePlane> findAll(Pageable page) {
-        return repository.findAllByDisabledIsFalse(page);
+    public Page<AirlinePlaneDTO> findAll(Pageable page) {
+
+        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find not disable entries from DB by id of airline and plane.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/findbyairlineandplane")
-    public List<AirlinePlane> findAllByAirlineAndPlane(
+    public List<AirlinePlaneDTO> findAllByAirlineAndPlane(
             @ApiParam(
                     name = "airlineid",
                     value = "ID of Airlines.",
@@ -115,18 +129,23 @@ public class AirlinePlaneController {
                     value = "ID of plane.",
                     required = true)
             @RequestParam
-            int planeId,
-            Pageable page) {
-        airlineRepositorySD.findById(airlineId).orElseThrow(()->new NoSuchEntityException(airlineId, Airline.class.getSimpleName()));
-        planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
-        if(repository.existsAirlinePlaneByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId))
-            throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
-        return repository.findByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId);
+            int planeId) {
+        return repository
+                .findByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId)
+                .stream()
+                .map(mapper::map)
+                .collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save list of AirlinePlane`s entities to DB",
             httpMethod = "POST")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParam(
+            name = "X-Auth-Token",
+            value = "token",
+            required = true,
+            dataType = "string",
+            paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -134,15 +153,29 @@ public class AirlinePlaneController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<AirlinePlane> saveAll(
+    public List<AirlinePlaneDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of AirlinePlane`s entities for update",
                     required = true)
-            @RequestBody List<AirlinePlane> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<AirlinePlaneDTO> entities) {
+        entities.forEach(
+                e-> {
+                    airlineRepositorySD.findById(e.getAirline());
+                    planeRepositorySD.findById(e.getPlane());
+                });
+        return repository
+                .saveAll(
+                        entities
+                                .stream()
+                                .map(mapper::map)
+                                .collect(Collectors.toList()))
+                .stream()
+                .map(mapper::map)
+                .collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save one AirlinePlane`s entity to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -151,39 +184,43 @@ public class AirlinePlaneController {
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
-    public AirlinePlane saveOne(
+    @PostMapping()
+    public AirlinePlaneDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody AirlinePlane entity) {
-        return repository.save(entity);
+            @RequestBody AirlinePlaneDTO entity) {
+        airlineRepositorySD.findById(entity.getAirline());
+        planeRepositorySD.findById(entity.getPlane());
+        return mapper.map(repository.save(mapper.map(entity)));
     }
 
-    @ApiOperation(  value = "Update AirlinePlane`s entity in DB.",
-            httpMethod = "PUT")
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
+    @ApiOperation(  value = "Update AirlinePlane`s entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = AirlinePlane.class)
+                    response = AirlinePlaneDTO.class)
     })
-    @PutMapping("/put")
-    public AirlinePlane updateOne(
+    @PatchMapping()
+    public AirlinePlaneDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody AirlinePlane entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody AirlinePlaneDTO entity) {
+        airlineRepositorySD.findById(entity.getAirline());
+        planeRepositorySD.findById(entity.getPlane());
+        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
     }
 
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @DeleteMapping("/disable")
+    @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
             @ApiParam(
@@ -191,11 +228,14 @@ public class AirlinePlaneController {
                     value = "ID of entity for disabling.",
                     required = true)
             @RequestBody Long id){
+        repository.findById(id).orElseThrow(()->new NoSuchEntityException(id, AirlinePlane.class.getSimpleName()));
         repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParam(
+            name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
@@ -205,6 +245,9 @@ public class AirlinePlaneController {
                     required = true
             )
             @RequestBody List<Long> idList){
+        idList.forEach(
+                e->repository.findById(e).orElseThrow(
+                        ()->new NoSuchEntityException(e, AirlinePlane.class.getSimpleName())));
         repository.disableEntities(idList);
     }
 }

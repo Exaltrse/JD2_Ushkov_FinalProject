@@ -1,7 +1,7 @@
 package com.ushkov.repository.springdata;
 
-import com.ushkov.domain.Airline;
-import com.ushkov.domain.Airport;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
-import java.util.List;
+import com.ushkov.domain.Airport;
 
 public interface AirportRepositorySD
         extends CrudRepository<Airport, Short>,
@@ -30,7 +30,7 @@ public interface AirportRepositorySD
 
     Page<Airport> findAllByDisabledIsFalse(Pageable page);
 
-    Page<Airline> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
+    Page<Airport> findAllByNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 
-    Page<Airline> findAllByShortNameIsContainingAndDisabledIsFalse(String name, Pageable page);
+    Page<Airport> findAllByShortNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 }

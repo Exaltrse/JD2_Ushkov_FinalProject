@@ -3,6 +3,11 @@ package com.ushkov.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -18,17 +23,20 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Airline;
+import com.ushkov.dto.AirlineDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.AirlineMapper;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
@@ -38,10 +46,12 @@ import com.ushkov.security.util.SecuredRoles;
 @RequestMapping("/airline")
 @RequiredArgsConstructor
 @PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class AirlineController {
 
     private final AirlineRepositorySD repository;
     private final PlaneRepositorySD planeRepositorySD;
+    private final AirlineMapper mapper;
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disabled Airlines entries from DB.",
@@ -51,13 +61,16 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=Airline.class,
+                    response=AirlineDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<Airline> findAll() {
-
-        return repository.findAllByDisabledIsFalse();
+    public List<AirlineDTO> findAll() {
+        return repository
+                .findAllByDisabledIsFalse()
+                .stream()
+                .map(mapper::map)
+                .collect(Collectors.toList());
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
@@ -76,12 +89,20 @@ public class AirlineController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = Airline.class)
+                    response = AirlineDTO.class)
     })
     @GetMapping("/id")
-    public Airline findOne(@RequestParam("id") Short id) {
+    public AirlineDTO findOne(
+            @RequestParam("id")
+                    @Valid
+                    @Min(0)
+                    @Max(Short.MAX_VALUE)
+                    Short id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + id.toString()));
+        return mapper.map(
+                repository.findById(id)
+                        .orElseThrow(
+                                ()-> new NoSuchEntityException(id, Airline.class.getSimpleName())));
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
@@ -92,14 +113,17 @@ public class AirlineController {
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<Airline> findAll(Pageable page) {
-        return repository.findAllByDisabledIsFalse(page);
+    public Page<AirlineDTO> findAll(Pageable page) {
+
+        return repository
+                .findAllByDisabledIsFalse(page)
+                .map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
-    public Page<Airline> findByName(
+    public Page<AirlineDTO> findByName(
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -107,13 +131,15 @@ public class AirlineController {
             @RequestParam
             String name,
             Pageable page) {
-        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
+        return repository
+                .findAllByNameIsContainingAndDisabledIsFalse(name, page)
+                .map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by shortname or part of shortname.")
     @GetMapping("/findbyshortname")
-    public Page<Airline> findByShortname(
+    public Page<AirlineDTO> findByShortname(
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -121,13 +147,15 @@ public class AirlineController {
             @RequestParam
             String name,
             Pageable page) {
-        return repository.findAllByShortNameIsContainingAndDisabledIsFalse(name, page);
+        return repository
+                .findAllByShortNameIsContainingAndDisabledIsFalse(name, page)
+                .map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by planes.")
     @GetMapping("/findbyplanes")
-    public Page<Airline> findByPlanes(
+    public Page<AirlineDTO> findByPlanes(
             @ApiParam(
                     name = "planeidlist",
                     value = "List of ID of planes.",
@@ -135,10 +163,10 @@ public class AirlineController {
             @RequestParam
             List<Integer> planeIdList,
             Pageable page) {
-        planeIdList.stream().forEach(pil->planeRepositorySD.findById(pil).orElseThrow());
-        return repository.findAllByPlaneAndDisabledIsFalse(
-                planeIdList,
-                page);
+        planeIdList.forEach(planeRepositorySD::findById);
+        return repository
+                .findAllByPlaneAndDisabledIsFalse(planeIdList, page)
+                .map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
@@ -152,13 +180,14 @@ public class AirlineController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<Airline> saveAll(
+    public List<AirlineDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of Airline`s entities for update",
                     required = true)
-            @RequestBody List<Airline> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<AirlineDTO> entities) {
+        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
+                .stream().map(mapper::map).collect(Collectors.toList());
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
@@ -171,33 +200,36 @@ public class AirlineController {
                     message = "Entity saved successfully.")
     })
     @PostMapping()
-    public Airline saveOne(
+    public AirlineDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody Airline entity) {
-        return repository.save(entity);
+            @RequestBody
+            @Valid
+                    AirlineDTO entity) {
+        return mapper.map(
+                repository.save(mapper.map(entity)));
     }
 
     @PreAuthorize(SecuredRoles.SUPERADMIN)
-    @ApiOperation(  value = "Update Airline`s entity in DB.",
-                    httpMethod = "PUT")
+    @ApiOperation(  value = "Update Airline`s entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = Airline.class)
+                    response = AirlineDTO.class)
     })
-    @PutMapping()
-    public Airline updateOne(
+    @PatchMapping()
+    public AirlineDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody Airline entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody AirlineDTO entity) {
+        return mapper.map(
+                repository.saveAndFlush(mapper.map(entity)));
     }
 
     @PreAuthorize(SecuredRoles.SUPERADMIN)

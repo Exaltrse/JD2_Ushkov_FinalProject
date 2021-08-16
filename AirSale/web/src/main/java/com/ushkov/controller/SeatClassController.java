@@ -3,6 +3,7 @@ package com.ushkov.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -14,47 +15,56 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ushkov.domain.Airline;
 import com.ushkov.domain.SeatClass;
+import com.ushkov.dto.SeatClassDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.SeatClassMapper;
 import com.ushkov.repository.springdata.SeatClassRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
 @Api(tags = "SeatClass", value="The SeatClass API", description = "The SeatClass API")
 @RestController
 @RequestMapping("/seatclass")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class SeatClassController {
 
     private final SeatClassRepositorySD repository;
+    private final SeatClassMapper mapper;
 
-    @ApiOperation(  value = "Find all not disabled SeatClasss entries from DB.",
-            notes = "Find all not disabled SeatClasss entries from DB.",
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
+    @ApiOperation(  value = "Find all not disabled SeatClasses entries from DB.",
+            notes = "Find all not disabled SeatClasses entries from DB.",
             httpMethod = "GET")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=SeatClass.class,
+                    response=SeatClassDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<SeatClass> findAll() {
+    public List<SeatClassDTO> findAll() {
 
-        return repository.findAllByDisabledIsFalse();
+        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find SeatClass entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
@@ -70,14 +80,16 @@ public class SeatClassController {
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = SeatClass.class)
+                    response = SeatClassDTO.class)
     })
     @GetMapping("/id")
-    public SeatClass findOne(@RequestParam("id") Short id) {
+    public SeatClassDTO findOne(@RequestParam("id") Short id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+        return mapper.map(repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(id, SeatClass.class.getSimpleName())));
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
     @ApiResponses({
             @ApiResponse(
@@ -85,13 +97,14 @@ public class SeatClassController {
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<SeatClass> findAll(Pageable page) {
-        return repository.findAllByDisabledIsFalse(page);
+    public Page<SeatClassDTO> findAll(Pageable page) {
+        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
-    public Page<Airline> findByName(
+    public Page<SeatClassDTO> findByName(
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -99,9 +112,10 @@ public class SeatClassController {
             @RequestParam
                     String name,
             Pageable page) {
-        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page);
+        return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(  value = "Save list of SeatClass`s entities to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -112,53 +126,54 @@ public class SeatClassController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<SeatClass> saveAll(
+    public List<SeatClassDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of SeatClass`s entities for update",
                     required = true)
-            @RequestBody List<SeatClass> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<SeatClassDTO> entities) {
+        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
+                .stream().map(mapper::map).collect(Collectors.toList());
     }
 
-    @ApiOperation(  value = "Save one SeatClass`s entity to DB",
-            httpMethod = "POST")
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
+    @ApiOperation(  value = "Save one SeatClass`s entity to DB")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
-    public SeatClass saveOne(
+    @PostMapping()
+    public SeatClassDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody SeatClass entity) {
-        return repository.save(entity);
+            @RequestBody SeatClassDTO entity) {
+        return mapper.map(repository.save(mapper.map(entity)));
     }
 
-    @ApiOperation(  value = "Update SeatClass`s entity in DB.",
-            httpMethod = "PUT")
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
+    @ApiOperation(  value = "Update SeatClass`s entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = SeatClass.class)
+                    response = SeatClassDTO.class)
     })
-    @PutMapping("/put")
-    public SeatClass updateOne(
+    @PatchMapping()
+    public SeatClassDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody SeatClass entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody SeatClassDTO entity) {
+        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
     }
 
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
@@ -172,6 +187,7 @@ public class SeatClassController {
         repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")

@@ -1,17 +1,18 @@
 package com.ushkov.dto;
 
-import com.ushkov.domain.SeatClass;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import com.ushkov.domain.SeatClass;
 
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlaneSeatsDTO {
+public class PlaneSeatsSmallDTO {
 
     private Integer plane;
 

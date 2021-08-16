@@ -32,9 +32,9 @@ public interface FlightPlaneRepositorySD
 
     List<FlightPlane> findAllByDisabledIsFalse();
 
-    boolean existsFlightPlaneByFlightAndPlaneAndDisabledIsFalse(Integer flightEntityId, Integer planeEntityId);
+    boolean existsFlightPlaneByFlightAndPlaneAndDisabledIsFalse(Flight flight, Plane plane);
 
-    List<FlightPlane> findByFlightAndPlaneAndDisabledIsFalse(Flight flightEntity, Plane planeEntity);
+    Page<FlightPlane> findByFlightAndPlaneAndDisabledIsFalse(Flight flightEntity, Plane planeEntity, Pageable page);
 
     List<FlightPlane> findAllByPlane(Plane plane);
 

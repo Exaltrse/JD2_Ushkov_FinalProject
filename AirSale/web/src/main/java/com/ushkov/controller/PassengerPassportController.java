@@ -3,6 +3,7 @@ package com.ushkov.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -14,54 +15,55 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ushkov.domain.Passenger;
 import com.ushkov.domain.PassengerPassport;
-import com.ushkov.domain.Passport;
-import com.ushkov.domain.Users;
-import com.ushkov.exception.ExistingEntityException;
+import com.ushkov.dto.PassengerPassportDTO;
 import com.ushkov.exception.NoSuchEntityException;
+import com.ushkov.mapper.PassengerPassportMapper;
 import com.ushkov.repository.springdata.PassengerPassportRepositorySD;
-import com.ushkov.repository.springdata.PassengerRepositorySD;
-import com.ushkov.repository.springdata.PassportRepositorySD;
+import com.ushkov.security.util.SecuredRoles;
 
-@Api(tags = "PassengerPassport", value="The PassengerPassport API", description = "The PassengerPassport API")
+@Api(tags = "PassengerPassport", value="The PassengerPassport API", description = "The PassengerPassport API. Only for Admins.")
 @RestController
 @RequestMapping("/passengerpassport")
 @RequiredArgsConstructor
+@PreAuthorize(SecuredRoles.SUPERADMIN)
+@Validated
 public class PassengerPassportController {
 
     private final PassengerPassportRepositorySD repository;
-    private final PassengerRepositorySD passengerRepositorySD;
-    private final PassportRepositorySD passportRepositorySD;
+    private final PassengerPassportMapper mapper;
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disabled PassengerPassports entries from DB.",
-            notes = "Find all not disabled PassengerPassports entries from DB.",
-            httpMethod = "GET")
+            notes = "Find all not disabled PassengerPassports entries from DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
                     message = "Success.",
-                    response=PassengerPassport.class,
+                    response=PassengerPassportDTO.class,
                     responseContainer="List")
     })
     @GetMapping
-    public List<PassengerPassport> findAll() {
-
-        return repository.findAllByDisabledIsFalse();
+    public List<PassengerPassportDTO> findAll() {
+        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value="Find PassengerPassport entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
@@ -71,33 +73,38 @@ public class PassengerPassportController {
                     value = "Id of PassengerPassport entry.",
                     required = true,
                     dataType = "string",
-                    paramType = "query")
+                    paramType = "query"),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
-                    response = PassengerPassport.class)
+                    response = PassengerPassportDTO.class)
     })
     @GetMapping("/id")
-    public PassengerPassport findOne(@RequestParam("id") long id) {
+    public PassengerPassportDTO findOne(@RequestParam("id") long id) {
 
-        return repository.findById(id).orElseThrow(()-> new NoSuchEntityException(NoSuchEntityException.Cause.NO_SUCH_ID + String.valueOf(id)));
+        return mapper.map(repository.findById(id)
+                .orElseThrow(()-> new NoSuchEntityException(id, PassengerPassport.class.getSimpleName())));
     }
 
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<PassengerPassport> findAll(Pageable page) {
-        return repository.findAllByDisabledIsFalse(page);
+    public Page<PassengerPassportDTO> findAll(Pageable page) {
+        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
-    @ApiOperation(  value = "Save list of PassengerPassport`s entities to DB",
-            httpMethod = "POST")
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
+    @ApiOperation(  value = "Save list of PassengerPassport`s entities to DB")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -105,86 +112,54 @@ public class PassengerPassportController {
     })
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public List<PassengerPassport> saveAll(
+    public List<PassengerPassportDTO> saveAll(
             @ApiParam(
                     name = "entities",
                     value = "List of PassengerPassport`s entities for update",
                     required = true)
-            @RequestBody List<PassengerPassport> entities) {
-        return repository.saveAll(entities);
+            @RequestBody List<PassengerPassportDTO> entities) {
+        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
+                .stream().map(mapper::map).collect(Collectors.toList());
     }
 
-    @ApiOperation(  value = "Save one PassengerPassport`s entity to DB",
-            httpMethod = "POST")
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
+    @ApiOperation(  value = "Save one PassengerPassport`s entity to DB")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.")
     })
     @PostMapping("/post")
-    public PassengerPassport saveOne(
+    public PassengerPassportDTO saveOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody PassengerPassport entity) {
-        return repository.save(entity);
+            @RequestBody PassengerPassportDTO entity) {
+        return mapper.map(repository.save(mapper.map(entity)));
     }
 
-    @ApiOperation(  value = "Update PassengerPassport`s entity in DB.",
-            httpMethod = "PUT")
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
+    @ApiOperation(  value = "Update PassengerPassport`s entity in DB.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entities updated successfully.",
-                    response = PassengerPassport.class)
+                    response = PassengerPassportDTO.class)
     })
-    @PutMapping("/put")
-    public PassengerPassport updateOne(
+    @PatchMapping()
+    public PassengerPassportDTO updateOne(
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody PassengerPassport entity) {
-        return repository.saveAndFlush(entity);
+            @RequestBody PassengerPassportDTO entity) {
+        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
     }
 
-    @ApiOperation(
-            value = "Add PassengerPassport`s entity in DB - adding passport.",
-            notes = "Add PassengerPassport`s entity in DB - adding passport. Passport's and passenger's entities must be saved in DB.",
-            httpMethod = "PUT")
-    @ApiResponses({
-            @ApiResponse(
-                    code = 200,
-                    message = "Entities updated successfully.",
-                    response = Users.class)
-    })
-    @PutMapping("/addpassport")
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void addPassengerToUser(
-            @ApiParam(
-                    name = "passenger",
-                    value = "Passenger for adding passport entity",
-                    required = true)
-            @RequestBody
-                    long passengerId,
-            @ApiParam(
-                    name = "passport",
-                    value = "Passport entity for adding to passenger",
-                    required = true)
-            @RequestBody
-                    long passportId) {
-        passengerRepositorySD.findById(passengerId).orElseThrow(()->new NoSuchEntityException(passengerId, Passenger.class.getSimpleName()));
-        passportRepositorySD.findById(passportId).orElseThrow(()->new NoSuchEntityException(passportId, Passport.class.getSimpleName()));
-        if(repository.existsPassengerPassportByPassengerAndPassport(passengerId, passportId))
-            throw new ExistingEntityException(ExistingEntityException.Cause.ALREADY_EXIST);
-        PassengerPassport passengerPassport = new PassengerPassport();
-        passengerPassport.setPassenger(passengerId);
-        passengerPassport.setPassport(passportId);
-        passengerPassport.setDisabled(false);
-        repository.save(passengerPassport);
-    }
-
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disable")
@@ -198,6 +173,7 @@ public class PassengerPassportController {
         repository.disableEntity(id);
     }
 
+    @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entities in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
