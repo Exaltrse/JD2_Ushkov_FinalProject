@@ -34,7 +34,6 @@ public class Role {
     private Short id;
     @Column(name = "role_name", length = 20, nullable = false, unique = true)
     private String name;
-    //TODO: Think about valuable permissions and create class
     @Column(name = "permissions")
     private String permissions;
     @Column(name = "disabled", nullable = false)

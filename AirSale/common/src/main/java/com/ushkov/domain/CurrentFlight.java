@@ -46,7 +46,6 @@ public class CurrentFlight {
     @Column(name = "arrival_date", nullable = false)
     private Timestamp arrivalDate;
     @Column(name = "baseprice", nullable = false)
-    //TODO: Think about this type
     private BigDecimal basePrice;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "current_flight_status", nullable = false)

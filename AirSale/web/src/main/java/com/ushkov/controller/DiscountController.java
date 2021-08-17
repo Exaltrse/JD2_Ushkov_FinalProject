@@ -5,9 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -35,6 +40,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.DiscountMapper;
 import com.ushkov.repository.springdata.DiscountRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "Discount", value="The Discount API", description = "The Discount API")
 @RestController
@@ -68,14 +74,6 @@ public class DiscountController {
     @ApiOperation(  value="Find Discount entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of Discount entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -83,7 +81,15 @@ public class DiscountController {
                     response = DiscountDTO.class)
     })
     @GetMapping("/id")
-    public DiscountDTO findOne(@RequestParam("id") Short id) {
+    public DiscountDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of Discount entry.",
+                    required = true)
+            @RequestParam("id")
+                    Short id) {
 
         return mapper.map(repository.findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, Discount.class.getSimpleName())));
@@ -105,6 +111,8 @@ public class DiscountController {
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
     public Page<DiscountDTO> findByName(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -127,11 +135,15 @@ public class DiscountController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<DiscountDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of Discount`s entities for update",
                     required = true)
             @RequestBody List<DiscountDTO> entities) {
+
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -147,11 +159,13 @@ public class DiscountController {
     })
     @PostMapping()
     public DiscountDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody DiscountDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -165,7 +179,9 @@ public class DiscountController {
                     response = DiscountDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public DiscountDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -180,6 +196,8 @@ public class DiscountController {
     @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
@@ -193,7 +211,9 @@ public class DiscountController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",

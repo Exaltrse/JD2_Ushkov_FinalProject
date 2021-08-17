@@ -6,9 +6,14 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -36,6 +41,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.CurrentFlightMapper;
 import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "CurrentFlight", value="The CurrentFlight API", description = "The CurrentFlight API")
 @RestController
@@ -69,14 +75,6 @@ public class CurrentFlightController {
     @ApiOperation(  value="Find CurrentFlight entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of CurrentFlight entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -84,7 +82,15 @@ public class CurrentFlightController {
                     response = CurrentFlightDTO.class)
     })
     @GetMapping("/id")
-    public CurrentFlightDTO findOne(@RequestParam("id") Long id) {
+    public CurrentFlightDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of CurrentFlight entry.",
+                    required = true)
+            @RequestParam("id")
+                    Long id) {
 
         return mapper.map(
                 repository
@@ -121,6 +127,9 @@ public class CurrentFlightController {
                     required = true)
             @RequestParam
                     Timestamp departureEndDate,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
@@ -152,6 +161,9 @@ public class CurrentFlightController {
                     required = true)
             @RequestParam
                     Timestamp arrivalEndDate,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
@@ -183,18 +195,27 @@ public class CurrentFlightController {
                     required = true)
             @RequestParam
                     Timestamp departureEndDate,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "departureairportid",
                     value = "ID of departure airport",
                     required = true)
             @RequestParam
                     Short departureAirportId,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "arrivalairportid",
                     value = "ID of arrival airport.",
                     required = true)
             @RequestParam
                     Short arrivalAirportId,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
@@ -223,11 +244,14 @@ public class CurrentFlightController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<CurrentFlightDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of CurrentFlight`s entities for update",
                     required = true)
             @RequestBody List<CurrentFlightDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -243,11 +267,13 @@ public class CurrentFlightController {
     })
     @PostMapping()
     public CurrentFlightDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody CurrentFlightDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -262,7 +288,9 @@ public class CurrentFlightController {
                     response = CurrentFlightDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public CurrentFlightDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -277,6 +305,8 @@ public class CurrentFlightController {
     @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
@@ -290,7 +320,9 @@ public class CurrentFlightController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",

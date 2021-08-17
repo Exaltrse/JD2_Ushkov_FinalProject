@@ -5,9 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -35,6 +40,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.SeatClassMapper;
 import com.ushkov.repository.springdata.SeatClassRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "SeatClass", value="The SeatClass API", description = "The SeatClass API")
 @RestController
@@ -68,14 +74,6 @@ public class SeatClassController {
     @ApiOperation(  value="Find SeatClass entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of SeatClass entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -83,7 +81,16 @@ public class SeatClassController {
                     response = SeatClassDTO.class)
     })
     @GetMapping("/id")
-    public SeatClassDTO findOne(@RequestParam("id") Short id) {
+    public SeatClassDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of SeatClass entry.",
+                    required = true
+            )
+            @RequestParam("id")
+                    Short id) {
 
         return mapper.map(repository.findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, SeatClass.class.getSimpleName())));
@@ -105,6 +112,8 @@ public class SeatClassController {
     @ApiOperation(value = "Find not disables entities by name or part of name.")
     @GetMapping("/findbyname")
     public Page<SeatClassDTO> findByName(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "name",
                     value = "String for searching by name.",
@@ -127,11 +136,14 @@ public class SeatClassController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<SeatClassDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of SeatClass`s entities for update",
                     required = true)
             @RequestBody List<SeatClassDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -146,11 +158,13 @@ public class SeatClassController {
     })
     @PostMapping()
     public SeatClassDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody SeatClassDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -164,7 +178,9 @@ public class SeatClassController {
                     response = SeatClassDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public SeatClassDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -179,6 +195,8 @@ public class SeatClassController {
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
@@ -192,7 +210,9 @@ public class SeatClassController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",

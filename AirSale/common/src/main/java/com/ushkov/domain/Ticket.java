@@ -1,9 +1,6 @@
 package com.ushkov.domain;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import java.math.BigDecimal;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,7 +11,11 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.math.BigDecimal;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 @Entity
 @Table(name = "ticket")
@@ -38,7 +39,6 @@ public class Ticket {
     @JoinColumn(name = "discount", nullable = false)
     @JsonManagedReference
     private Discount discount;
-    //TODO: Think about this type
     @Column(name = "final_price", nullable = false)
     private BigDecimal finalPrice;
     @ManyToOne(fetch = FetchType.EAGER)

@@ -5,6 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -35,6 +43,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.AirportMapper;
 import com.ushkov.repository.springdata.AirportRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "Airport", value="The Airport API", description = "The Airport API")
 @RestController
@@ -83,7 +92,12 @@ public class AirportController {
                     response = AirportDTO.class)
     })
     @GetMapping("/id")
-    public AirportDTO findOne(@RequestParam("id") Short id) {
+    public AirportDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
+            @RequestParam("id")
+                    Short id) {
 
         return mapper.map((repository.findById(id).orElseThrow(()-> new NoSuchEntityException(id, Airport.class.getSimpleName()))));
     }
@@ -109,6 +123,8 @@ public class AirportController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
+            @Valid
+            @NotBlank
             @RequestParam
                     String name,
             Pageable page) {
@@ -123,6 +139,9 @@ public class AirportController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
+            @Valid
+            @NotBlank
+            @Size(max = 3)
             @RequestParam
                     String name,
             Pageable page) {
@@ -141,11 +160,15 @@ public class AirportController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<AirportDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of Airport`s entities for update",
                     required = true)
             @RequestBody List<AirportDTO> entities) {
+
+        entities.forEach(e->e.setId(null));
         return repository
                 .saveAll(
                         entities
@@ -172,7 +195,9 @@ public class AirportController {
                     name = "entity",
                     value = "Entity for save",
                     required = true)
+            @Valid
             @RequestBody AirportDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -187,7 +212,9 @@ public class AirportController {
                     response = AirportDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public AirportDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -202,6 +229,8 @@ public class AirportController {
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
@@ -215,7 +244,9 @@ public class AirportController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",

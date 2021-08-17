@@ -35,7 +35,6 @@ public class Airport {
     private String name;
     @Column(name = "airport_short_name", length = 4, nullable = false, unique = true)
     private String shortName;
-    //TODO: make JSON with coordinates
     @Column(name = "airpot_location", length = 100, nullable = false, unique = true)
     private String location;
     @Column(name = "disabled", nullable = false)

@@ -5,6 +5,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -37,6 +43,7 @@ import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "AirlinePlane", value="The AirlinePlane API", description = "The AirlinePlane API. For admins only.")
 @RestController
@@ -88,7 +95,12 @@ public class AirlinePlaneController {
                     response = AirlinePlaneDTO.class)
     })
     @GetMapping("/id")
-    public AirlinePlaneDTO findOne(@RequestParam("id") Long id) {
+    public AirlinePlaneDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @RequestParam("id")
+                    Long id) {
 
         return mapper.map(repository.findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, AirlinePlane.class.getSimpleName())));
@@ -118,12 +130,18 @@ public class AirlinePlaneController {
     })
     @GetMapping("/findbyairlineandplane")
     public List<AirlinePlaneDTO> findAllByAirlineAndPlane(
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "airlineid",
                     value = "ID of Airlines.",
                     required = true)
             @RequestParam
             short airlineId,
+            @Valid
+            @Min(1)
+            @Max(Integer.MAX_VALUE)
             @ApiParam(
                     name = "planeid",
                     value = "ID of plane.",
@@ -154,6 +172,8 @@ public class AirlinePlaneController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<AirlinePlaneDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of AirlinePlane`s entities for update",
@@ -161,6 +181,7 @@ public class AirlinePlaneController {
             @RequestBody List<AirlinePlaneDTO> entities) {
         entities.forEach(
                 e-> {
+                    e.setId(null);
                     airlineRepositorySD.findById(e.getAirline());
                     planeRepositorySD.findById(e.getPlane());
                 });
@@ -190,7 +211,9 @@ public class AirlinePlaneController {
                     name = "entity",
                     value = "Entity for save",
                     required = true)
+            @Valid
             @RequestBody AirlinePlaneDTO entity) {
+        entity.setId(null);
         airlineRepositorySD.findById(entity.getAirline());
         planeRepositorySD.findById(entity.getPlane());
         return mapper.map(repository.save(mapper.map(entity)));
@@ -206,7 +229,9 @@ public class AirlinePlaneController {
                     response = AirlinePlaneDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public AirlinePlaneDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -223,6 +248,8 @@ public class AirlinePlaneController {
     @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
@@ -238,7 +265,9 @@ public class AirlinePlaneController {
             name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",

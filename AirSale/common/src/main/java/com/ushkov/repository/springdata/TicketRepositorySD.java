@@ -1,9 +1,7 @@
 package com.ushkov.repository.springdata;
 
-import com.ushkov.domain.CurrentFlight;
-import com.ushkov.domain.Passport;
-import com.ushkov.domain.Ticket;
-import com.ushkov.domain.TicketStatus;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,8 +9,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import com.ushkov.domain.CurrentFlight;
+import com.ushkov.domain.Passport;
+import com.ushkov.domain.Ticket;
+import com.ushkov.domain.TicketStatus;
 
 public interface TicketRepositorySD
         extends CrudRepository<Ticket, Long>,
@@ -42,4 +44,9 @@ public interface TicketRepositorySD
     Page<Ticket> findAllByCurrentFlightAndTicketStatusAndDisabledIsFalse(CurrentFlight currentFlightEntity, TicketStatus ticketStatusEntity, Pageable page);
 
     List<Ticket> findAllByCurrentFlightAndDisabledIsFalse(CurrentFlight orElseThrow);
+
+    @Query(value = "select t from Ticket as t where t.passport in " +
+            "(select psgrpas.passport from PassengerPassport as psgrpas where psgrpas.passenger in " +
+            "(select up.passenger from UserPassenger as up where up.user = :id))")
+    List<Ticket> findAllByUserId(@Param("id") Integer id);
 }
