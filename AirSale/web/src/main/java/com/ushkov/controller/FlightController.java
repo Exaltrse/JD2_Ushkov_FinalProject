@@ -28,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Airport;
@@ -83,7 +83,7 @@ public class FlightController {
                     message = "Entry found successfully.",
                     response = FlightDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public FlightDTO findOne(
             @Valid
             @Min(1)
@@ -91,7 +91,7 @@ public class FlightController {
             @ApiParam(
                     value = "Id of Flight entry.",
                     required = true)
-            @RequestParam("id")
+            @PathVariable
                     Integer id) {
 
         return mapper.map(repository.findById(id)
@@ -121,7 +121,7 @@ public class FlightController {
                     name = "name",
                     value = "String for searching by flightnumber.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String flightnumber,
             Pageable page) {
         return repository.findAllByNumberIsContainingAndDisabledIsFalse(flightnumber, page).map(mapper::map);
@@ -138,7 +138,7 @@ public class FlightController {
                     name = "departure",
                     value = "ID of airport of departure for searching.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     short departureAirportId,
             @Valid
             @Min(1)
@@ -147,7 +147,7 @@ public class FlightController {
                     name = "arrival",
                     value = "ID of airport of arrival for searching.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     short arrivalAirportId,
             Pageable page) {
         Airport departureAirport = airportRepositorySD.findById(departureAirportId)
@@ -237,7 +237,7 @@ public class FlightController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody int id){
+            @PathVariable int id){
         repository.disableEntity(id);
     }
 
@@ -254,7 +254,7 @@ public class FlightController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Integer> idList){
+            @PathVariable List<Integer> idList){
         repository.disableEntities(idList);
     }
 }

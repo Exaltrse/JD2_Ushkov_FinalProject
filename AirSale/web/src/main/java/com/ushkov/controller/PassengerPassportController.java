@@ -29,10 +29,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.PassengerPassport;
@@ -83,7 +83,7 @@ public class PassengerPassportController {
                     message = "Entry found successfully.",
                     response = PassengerPassportDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public PassengerPassportDTO findOne(
             @Valid
             @Min(1)
@@ -92,7 +92,7 @@ public class PassengerPassportController {
                     value = "Id of PassengerPassport entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     long id) {
 
         return mapper.map(repository.findById(id)
@@ -188,7 +188,7 @@ public class PassengerPassportController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id){
+            @PathVariable long id){
         repository.disableEntity(id);
     }
 
@@ -205,7 +205,7 @@ public class PassengerPassportController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }

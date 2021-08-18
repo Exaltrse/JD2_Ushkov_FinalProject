@@ -31,10 +31,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Airport;
@@ -91,12 +91,12 @@ public class AirportController {
                     message = "Entry found successfully.",
                     response = AirportDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public AirportDTO findOne(
             @Valid
             @Min(1)
             @Max(Short.MAX_VALUE)
-            @RequestParam("id")
+            @PathVariable
                     Short id) {
 
         return mapper.map((repository.findById(id).orElseThrow(()-> new NoSuchEntityException(id, Airport.class.getSimpleName()))));
@@ -125,7 +125,7 @@ public class AirportController {
                     required = true)
             @Valid
             @NotBlank
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -142,7 +142,7 @@ public class AirportController {
             @Valid
             @NotBlank
             @Size(max = 3)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByShortNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -235,7 +235,7 @@ public class AirportController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody Short id){
+            @PathVariable Short id){
         repository.disableEntity(id);
     }
 
@@ -252,7 +252,7 @@ public class AirportController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Short> idList){
+            @PathVariable List<Short> idList){
         repository.disableEntities(idList);
     }
 }

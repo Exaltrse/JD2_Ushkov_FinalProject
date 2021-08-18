@@ -28,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -91,7 +92,7 @@ public class UsersController {
                     message = "Entry found successfully.",
                     response = UsersDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public UsersDTO findOne(
             @Valid
             @Min(1)
@@ -100,7 +101,7 @@ public class UsersController {
                     value = "Id of Users entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     int id,
             @RequestHeader("X-Auth-Token") String token
             ) {
@@ -138,7 +139,7 @@ public class UsersController {
                     name = "login",
                     value = "String for searching by login.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String login,
             Pageable page) {
         return repository.findAllByLoginIsContainingAndDisabledIsFalse(login, page).map(mapper::map);
@@ -172,7 +173,7 @@ public class UsersController {
                     name = "role",
                     value = "ID of role.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     short roleId,
             Pageable page) {
         return repository
@@ -271,7 +272,7 @@ public class UsersController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody int id,
+            @PathVariable int id,
             @RequestHeader("X-Auth-Token") String token){
         Users user = repository.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
         if(user.getRole().getName().equals(SystemRoles.USER)&&user.getId()!=id) throw new NoPermissionForThisOperationException();
@@ -292,7 +293,7 @@ public class UsersController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Integer> idList){
+            @PathVariable List<Integer> idList){
 
         repository.disableEntities(idList);
     }

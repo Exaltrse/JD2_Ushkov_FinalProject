@@ -28,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Plane;
@@ -80,7 +80,7 @@ public class PlaneController {
                     message = "Entry found successfully.",
                     response = PlaneDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public PlaneDTO findOne(
             @Valid
             @Min(1)
@@ -89,7 +89,7 @@ public class PlaneController {
                     value = "Id of Plane entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     int id) {
 
         return mapper.map(repository.findById(id)
@@ -106,7 +106,7 @@ public class PlaneController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByAircraftNumberIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -194,7 +194,7 @@ public class PlaneController {
     @PreAuthorize(SecuredRoles.SUPERADMIN)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @DeleteMapping("/disable")
+    @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
             @Valid
@@ -203,7 +203,7 @@ public class PlaneController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody int id){
+            @PathVariable int id){
         repository.disableEntity(id);
     }
 
@@ -220,7 +220,7 @@ public class PlaneController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Integer> idList){
+            @PathVariable List<Integer> idList){
         repository.disableEntities(idList);
     }
 }

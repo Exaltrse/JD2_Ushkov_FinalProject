@@ -28,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.TicketStatus;
@@ -80,7 +80,7 @@ public class TicketStatusController {
                     message = "Entry found successfully.",
                     response = TicketStatusDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public TicketStatusDTO findOne(
             @Valid
             @Min(1)
@@ -89,7 +89,7 @@ public class TicketStatusController {
                     value = "Id of TicketStatus entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     Short id) {
 
         return mapper.map(repository.findById(id)
@@ -118,7 +118,7 @@ public class TicketStatusController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -202,7 +202,7 @@ public class TicketStatusController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody Short id){
+            @PathVariable Short id){
         repository.disableEntity(id);
     }
 
@@ -219,7 +219,7 @@ public class TicketStatusController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Short> idList){
+            @PathVariable List<Short> idList){
         repository.disableEntities(idList);
     }
 }

@@ -29,10 +29,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.CurrentFlight;
@@ -81,7 +81,7 @@ public class CurrentFlightController {
                     message = "Entry found successfully.",
                     response = CurrentFlightDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public CurrentFlightDTO findOne(
             @Valid
             @Min(1)
@@ -89,7 +89,7 @@ public class CurrentFlightController {
             @ApiParam(
                     value = "Id of CurrentFlight entry.",
                     required = true)
-            @RequestParam("id")
+            @PathVariable
                     Long id) {
 
         return mapper.map(
@@ -113,19 +113,19 @@ public class CurrentFlightController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date.")
-    @GetMapping("/findbydeparture")
+    @PostMapping("/findbydeparture")
     public Page<CurrentFlightDTO> findByDeparture(
             @ApiParam(
                     name = "departurebeginingdate",
                     value = "Timestamp of departure. From what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp departureBeginingDate,
             @ApiParam(
                     name = "departureenddate",
                     value = "Timestamp of departure. To what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp departureEndDate,
             @Valid
             @Min(1)
@@ -133,7 +133,7 @@ public class CurrentFlightController {
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
-            @RequestParam
+            @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
         return repository
@@ -147,19 +147,19 @@ public class CurrentFlightController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by arrival date.")
-    @GetMapping("/findbyarrival")
+    @PostMapping("/findbyarrival")
     public Page<CurrentFlightDTO> findByArrival(
             @ApiParam(
                     name = "arrivalbeginingdate",
                     value = "Timestamp of arrival. From what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp arrivalBeginingDate,
             @ApiParam(
                     name = "arrivalenddate",
                     value = "Timestamp of arrival. To what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp arrivalEndDate,
             @Valid
             @Min(1)
@@ -167,7 +167,7 @@ public class CurrentFlightController {
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
-            @RequestParam
+            @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
         return repository
@@ -181,19 +181,19 @@ public class CurrentFlightController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date and Airports of departure and arrival.")
-    @GetMapping("/findbyarrivalandairports")
+    @PostMapping("/findbyarrivalandairports")
     public Page<CurrentFlightDTO> findByDepartureAndAirports(
             @ApiParam(
                     name = "departurebeginingdate",
                     value = "Timestamp of departure. From what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp departureBeginingDate,
             @ApiParam(
                     name = "departureenddate",
                     value = "Timestamp of departure. To what timestamp is searching.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Timestamp departureEndDate,
             @Valid
             @Min(1)
@@ -202,7 +202,7 @@ public class CurrentFlightController {
                     name = "departureairportid",
                     value = "ID of departure airport",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Short departureAirportId,
             @Valid
             @Min(1)
@@ -211,7 +211,7 @@ public class CurrentFlightController {
                     name = "arrivalairportid",
                     value = "ID of arrival airport.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     Short arrivalAirportId,
             @Valid
             @Min(1)
@@ -219,7 +219,7 @@ public class CurrentFlightController {
             @ApiParam(
                     name = "status",
                     value = "ID of status of Current Flight.")
-            @RequestParam
+            @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
         return repository.findAllByDepartureAndAirports(
@@ -311,7 +311,7 @@ public class CurrentFlightController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id){
+            @PathVariable long id){
         repository.disableEntity(id);
     }
 
@@ -328,7 +328,7 @@ public class CurrentFlightController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }

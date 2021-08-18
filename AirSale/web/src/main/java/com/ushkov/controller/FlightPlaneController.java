@@ -28,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Flight;
@@ -85,7 +85,7 @@ public class FlightPlaneController {
                     message = "Entry found successfully.",
                     response = FlightPlaneDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public FlightPlaneDTO findOne(
             @Valid
             @Min(1)
@@ -93,7 +93,7 @@ public class FlightPlaneController {
             @ApiParam(
                     value = "Id of FlightPlane entry.",
                     required = true)
-            @RequestParam("id")
+            @PathVariable
                     int id) {
 
         return mapper.map(repository.findById(id)
@@ -117,7 +117,7 @@ public class FlightPlaneController {
                     name = "flightid",
                     value = "ID of Flight.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     int flightId,
             @Valid
             @Min(1)
@@ -126,7 +126,7 @@ public class FlightPlaneController {
                     name = "planeid",
                     value = "ID of plane.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     int planeId,
             Pageable page) {
         Flight flight = flightRepositorySD.findById(flightId).orElseThrow(()->new NoSuchEntityException(flightId, Flight.class.getSimpleName()));
@@ -225,7 +225,7 @@ public class FlightPlaneController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody int id){
+            @PathVariable int id){
         repository.disableEntity(id);
     }
 
@@ -242,7 +242,7 @@ public class FlightPlaneController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Integer> idList){
+            @PathVariable List<Integer> idList){
         repository.disableEntities(idList);
     }
 }

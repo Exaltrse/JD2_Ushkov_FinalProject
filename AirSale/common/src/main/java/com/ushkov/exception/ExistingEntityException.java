@@ -18,6 +18,11 @@ public class ExistingEntityException extends RuntimeException {
         super(cause);
     }
 
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
+    }
+
     public static final class Cause{
         public static final String ALREADY_EXIST = "Such entity already exist.";
     }

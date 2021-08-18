@@ -27,6 +27,11 @@ public class NoSuchEntityException extends RuntimeException {
         super(cause);
     }
 
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
+    }
+
     public static final class Cause{
         public static final String NO_SUCH_ID = "There are no such entity in DB whith ID = ";
     }

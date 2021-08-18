@@ -28,11 +28,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Passenger;
@@ -92,7 +92,7 @@ public class PassengerController {
                     message = "Entry found successfully.",
                     response = PassengerDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public PassengerDTO findOne(
             @Valid
             @Min(1)
@@ -101,7 +101,7 @@ public class PassengerController {
                     value = "Id of Passenger entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     long id,
             @RequestHeader("X-Auth-Token") String token) {
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
@@ -122,7 +122,7 @@ public class PassengerController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByFirstNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -139,7 +139,7 @@ public class PassengerController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByLastNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -156,7 +156,7 @@ public class PassengerController {
                     name = "firstname",
                     value = "String for searching by firstname.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String firstName,
             @Valid
             @NotEmpty
@@ -164,7 +164,7 @@ public class PassengerController {
                     name = "lastname",
                     value = "String for searching by lastname.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String lastName,
             Pageable page) {
         return repository
@@ -182,7 +182,7 @@ public class PassengerController {
                     name = "user",
                     value = "User entity to search for dependent passenger entities.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     Integer id,
             Pageable page,
             @RequestHeader("X-Auth-Token") String token){
@@ -329,7 +329,7 @@ public class PassengerController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id,
+            @PathVariable long id,
             @RequestHeader("X-Auth-Token") String token){
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
         if(user.getRole().getName().equals(SystemRoles.USER)
@@ -351,7 +351,7 @@ public class PassengerController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }

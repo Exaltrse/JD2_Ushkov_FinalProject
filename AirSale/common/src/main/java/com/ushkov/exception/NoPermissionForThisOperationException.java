@@ -17,4 +17,9 @@ public class NoPermissionForThisOperationException extends RuntimeException{
     public NoPermissionForThisOperationException(Throwable cause) {
         super(cause);
     }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
+    }
 }

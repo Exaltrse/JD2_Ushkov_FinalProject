@@ -29,11 +29,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Passenger;
@@ -100,7 +100,7 @@ public class PassportController {
                     message = "Entry found successfully.",
                     response = PassportDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public PassportDTO findOne(
             @Valid
             @Min(1)
@@ -109,7 +109,7 @@ public class PassportController {
                     value = "Id of Passport entry.",
                     required = true
             )
-            @RequestParam("id")
+            @PathVariable
                     long id,
             @RequestHeader("X-Auth-Token") String token) {
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
@@ -146,7 +146,7 @@ public class PassportController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByFirstNameLatinIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -163,7 +163,7 @@ public class PassportController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String name,
             Pageable page) {
         return repository.findAllByLastNameLatinIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -180,7 +180,7 @@ public class PassportController {
                     name = "firstname",
                     value = "String for searching by firstname.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String firstName,
             @Valid
             @NotEmpty
@@ -188,7 +188,7 @@ public class PassportController {
                     name = "lastname",
                     value = "String for searching by lastname.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String lastName,
             Pageable page) {
         return repository
@@ -199,14 +199,14 @@ public class PassportController {
     @PreAuthorize(SecuredRoles.ALL)
     @ApiOperation(value = "Find passports by passenger.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbypassenger")
+    @PostMapping("/findbypassenger")
     public Page<PassportDTO> findAllPassportsByPassenger(
             @Valid
             @ApiParam(
                     name = "passenger",
                     value = "Passenger entity to search for dependent passport entities.",
                     required = true)
-            @RequestParam
+            @RequestBody
                     PassengerDTO passenger,
             Pageable page,
             @RequestHeader("X-Auth-Token") String token){
@@ -232,7 +232,7 @@ public class PassportController {
                     name = "userid",
                     value = "User ID for search for dependent passport entities.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     Integer userid,
             Pageable page,
             @RequestHeader("X-Auth-Token") String token){
@@ -254,7 +254,7 @@ public class PassportController {
                     name = "series",
                     value = "Series of passport or it part. String.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String series,
             Pageable page){
         return repository.findAllBySeriesContainingAndDisabledIsFalse(series, page).map(mapper::map);
@@ -346,7 +346,7 @@ public class PassportController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id,
+            @PathVariable long id,
             @RequestHeader("X-Auth-Token") String token){
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
         if(user.getRole().getName().equals(SystemRoles.USER) || user.getRole().getName().equals(SystemRoles.MANAGER)){
@@ -371,7 +371,7 @@ public class PassportController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }
