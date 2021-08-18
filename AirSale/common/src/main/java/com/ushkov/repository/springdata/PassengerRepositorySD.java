@@ -1,6 +1,7 @@
 package com.ushkov.repository.springdata;
 
-import com.ushkov.domain.Passenger;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,8 +9,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import com.ushkov.domain.Passenger;
 
 public interface PassengerRepositorySD
         extends CrudRepository<Passenger, Long>,
@@ -36,4 +38,7 @@ public interface PassengerRepositorySD
     Page<Passenger> findAllByLastNameIsContainingAndDisabledIsFalse(String name, Pageable page);
 
     Page<Passenger> findByFirstNameIsContainingAndLastNameIsContainingAndDisabledIsFalse(String firstName, String lastName, Pageable page);
+
+    @Query(value = "select p from Passenger as p where p.id in (select up from UserPassenger as up where up.user = :id)")
+    List<Passenger> findAllByUserId(@Param("id") Integer id);
 }

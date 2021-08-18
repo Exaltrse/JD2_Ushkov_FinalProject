@@ -35,7 +35,6 @@ public class PassengerClass {
     @Column(name = "passenger_class_name", length = 30, nullable = false, unique = true)
     private String name;
     @Column(name = "passenger_class_properties", nullable = false)
-    //TODO: Think about valuable properties and create class
     private String properties;
     @Column(name = "disabled", nullable = false)
     private boolean disabled;

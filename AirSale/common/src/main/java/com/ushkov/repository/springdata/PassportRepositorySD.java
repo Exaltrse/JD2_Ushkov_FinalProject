@@ -39,4 +39,15 @@ public interface PassportRepositorySD
     Page<Passport> findAllByIdInAndDisabledIsFalse(List<Long> idList, Pageable page);
 
     Page<Passport> findAllBySeriesContainingAndDisabledIsFalse(String series, Pageable page);
+
+
+    @Query(value = "select psp from Passport as psp where psp.id in " +
+            "(select psgrpas.passport from PassengerPassport as psgrpas where psgrpas.passenger in " +
+            "(select up.passenger from UserPassenger as up where up.user = :id))")
+    List<Passport> findPassportByUserId(Integer id);
+
+    @Query(value = "select psp from Passport as psp where psp.id in " +
+            "(select psgrpas.passport from PassengerPassport as psgrpas where psgrpas.passenger in " +
+            "(select up.passenger from UserPassenger as up where up.user = :id))")
+    Page<Passport> findPassportByUserId(Integer id, Pageable page);
 }

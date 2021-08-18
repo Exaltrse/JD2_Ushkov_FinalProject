@@ -5,9 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -23,10 +28,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.UserPassenger;
@@ -35,6 +40,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.UserPassengerMapper;
 import com.ushkov.repository.springdata.UserPassengerRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "UserPassenger", value="The UserPassenger API", description = "The UserPassenger API. Only for Admins.")
 @RestController
@@ -68,22 +74,23 @@ public class UserPassengerController {
     @ApiOperation(  value="Find UserPassenger entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of UserPassenger entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
                     response = UserPassengerDTO.class)
     })
-    @GetMapping("/id")
-    public UserPassengerDTO findOne(@RequestParam("id") long id) {
+    @GetMapping("/{id}")
+    public UserPassengerDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of UserPassenger entry.",
+                    required = true
+            )
+            @PathVariable
+                    long id) {
 
         return mapper.map(repository.findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, UserPassenger.class.getSimpleName())));
@@ -112,11 +119,14 @@ public class UserPassengerController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<UserPassengerDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of UserPassenger`s entities for update",
                     required = true)
             @RequestBody List<UserPassengerDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -131,11 +141,13 @@ public class UserPassengerController {
     })
     @PostMapping("/post")
     public UserPassengerDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody UserPassengerDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -149,7 +161,9 @@ public class UserPassengerController {
                     response = UserPassengerDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public UserPassengerDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -164,11 +178,13 @@ public class UserPassengerController {
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id){
+            @PathVariable long id){
         repository.disableEntity(id);
     }
 
@@ -177,13 +193,15 @@ public class UserPassengerController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }

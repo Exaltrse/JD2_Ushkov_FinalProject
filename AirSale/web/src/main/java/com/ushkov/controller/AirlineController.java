@@ -8,10 +8,13 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -27,10 +30,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Airline;
@@ -40,6 +43,7 @@ import com.ushkov.mapper.AirlineMapper;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "Airline", value="The Airline API", description = "The Airline API")
 @RestController
@@ -77,26 +81,19 @@ public class AirlineController {
     @ApiOperation(  value="Find Airline entry from DB by ID.",
                     notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
                     httpMethod="GET")
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of airline entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
                     response = AirlineDTO.class)
     })
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public AirlineDTO findOne(
-            @RequestParam("id")
-                    @Valid
-                    @Min(0)
-                    @Max(Short.MAX_VALUE)
+            @ApiParam(value = "Id of airline entry.", required = true)
+            @Valid
+            @Min(1)
+            @Max(value = Short.MAX_VALUE, message = "Max value is " + Short.MAX_VALUE)
+            @PathVariable
                     Short id) {
 
         return mapper.map(
@@ -128,7 +125,9 @@ public class AirlineController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @Valid
+            @NotBlank
+            @PathVariable
             String name,
             Pageable page) {
         return repository
@@ -144,7 +143,9 @@ public class AirlineController {
                     name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @RequestParam
+            @Valid
+            @Size(min = 1, max = 3, message = "Length of short name of airline must be between 2 and 3 chars.")
+            @PathVariable
             String name,
             Pageable page) {
         return repository
@@ -160,7 +161,11 @@ public class AirlineController {
                     name = "planeidlist",
                     value = "List of ID of planes.",
                     required = true)
-            @RequestParam
+            @Valid
+            @NotEmpty(message = "You must fill List with at least one element.")
+            @Max(Integer.MAX_VALUE)
+            @Min(1)
+            @PathVariable
             List<Integer> planeIdList,
             Pageable page) {
         planeIdList.forEach(planeRepositorySD::findById);
@@ -181,11 +186,15 @@ public class AirlineController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<AirlineDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of Airline`s entities for update",
                     required = true)
-            @RequestBody List<AirlineDTO> entities) {
+            @RequestBody
+                    List<AirlineDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -201,13 +210,14 @@ public class AirlineController {
     })
     @PostMapping()
     public AirlineDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody
-            @Valid
                     AirlineDTO entity) {
+        entity.setId(null);
         return mapper.map(
                 repository.save(mapper.map(entity)));
     }
@@ -222,7 +232,9 @@ public class AirlineController {
                     response = AirlineDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public AirlineDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -238,11 +250,13 @@ public class AirlineController {
     @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody Short id){
+            @PathVariable Short id){
             repository.disableEntity(id);
     }
 
@@ -252,12 +266,14 @@ public class AirlineController {
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Short> idList){
+            @PathVariable List<Short> idList){
         repository.disableEntities(idList);
     }
 }

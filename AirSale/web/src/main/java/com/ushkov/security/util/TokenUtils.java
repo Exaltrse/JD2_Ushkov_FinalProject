@@ -1,7 +1,13 @@
 package com.ushkov.security.util;
 
 
-import com.ushkov.beans.JwtConfig;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -10,15 +16,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import static io.jsonwebtoken.Claims.SUBJECT;
 import static java.util.Calendar.MILLISECOND;
+
+import com.ushkov.beans.JwtConfig;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 
 
 @Component
@@ -26,8 +28,10 @@ import static java.util.Calendar.MILLISECOND;
 public class TokenUtils {
     public static final String CREATE_VALUE = "created";
     public static final String ROLES = "roles";
+    public static final String ID = "id";
 
     private final JwtConfig jwtTokenConfig;
+    private final UsersRepositorySD usersRepositorySD;
 
     public String getUsernameFromToken(String token) {
         return getClaimsFromToken(token).getSubject();
@@ -39,6 +43,10 @@ public class TokenUtils {
 
     public Date getExpirationDateFromToken(String token) {
         return getClaimsFromToken(token).getExpiration();
+    }
+
+    public Integer getIdFromToken(String token) {
+        return (Integer) getClaimsFromToken(token).get(ID);
     }
 
     private Claims getClaimsFromToken(String token) {
@@ -82,6 +90,7 @@ public class TokenUtils {
         claims.put(SUBJECT, userDetails.getUsername());
         claims.put(CREATE_VALUE, generateCurrentDate());
         claims.put(ROLES, getEncryptedRoles(userDetails));
+        claims.put(ID, usersRepositorySD.findByLogin(userDetails.getUsername()).getId());
         return generateToken(claims);
     }
 

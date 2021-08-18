@@ -4,6 +4,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -22,19 +28,25 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.Users;
 import com.ushkov.dto.UsersDTO;
+import com.ushkov.exception.NoPermissionForThisOperationException;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.UsersMapper;
 import com.ushkov.repository.springdata.RoleRepositorySD;
 import com.ushkov.repository.springdata.UsersRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.security.util.TokenUtils;
+import com.ushkov.utils.SystemRoles;
+import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "Users", value="The Users API", description = "The Users API")
 @RestController
@@ -47,9 +59,10 @@ public class UsersController {
     private final UsersRepositorySD repository;
     private final RoleRepositorySD roleRepository;
     private final UsersMapper mapper;
+    private final TokenUtils tokenUtils;
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
-    @ApiOperation(  value = "Find all not disabled Userss entries from DB.",
+    @ApiOperation(  value = "Find all not disabled Users`s entries from DB.",
             notes = "Find all not disabled Users`s entries from DB.",
             httpMethod = "GET")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -71,13 +84,7 @@ public class UsersController {
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header"),
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of Users entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     })
     @ApiResponses({
             @ApiResponse(
@@ -85,9 +92,21 @@ public class UsersController {
                     message = "Entry found successfully.",
                     response = UsersDTO.class)
     })
-    @GetMapping("/id")
-    public UsersDTO findOne(@RequestParam("id") int id) {
-        //TODO: Check for ROLE_USER and allow to get information only for it ID.
+    @GetMapping("/{id}")
+    public UsersDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Integer.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of Users entry.",
+                    required = true
+            )
+            @PathVariable
+                    int id,
+            @RequestHeader("X-Auth-Token") String token
+            ) {
+        Users user = repository.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
+        if(user.getRole().getName().equals(SystemRoles.USER)&&user.getId()!=id) throw new NoPermissionForThisOperationException();
         return mapper.map(
                 repository
                         .findById(id)
@@ -114,21 +133,25 @@ public class UsersController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyloginpart")
     public Page<UsersDTO> findByLoginpart(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "login",
                     value = "String for searching by login.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     String login,
             Pageable page) {
         return repository.findAllByLoginIsContainingAndDisabledIsFalse(login, page).map(mapper::map);
     }
 
-    @PreAuthorize(SecuredRoles.ALL)
+    @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find user by full login.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbynamedistinct")
     public UsersDTO findByLoginDistinct(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "login",
                     value = "String for searching by login.",
@@ -143,11 +166,14 @@ public class UsersController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyroles")
     public Page<UsersDTO> findAllByRole(
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "role",
                     value = "ID of role.",
                     required = true)
-            @RequestParam
+            @PathVariable
                     short roleId,
             Pageable page) {
         return repository
@@ -170,11 +196,14 @@ public class UsersController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<UsersDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of Users`s entities for update",
                     required = true)
             @RequestBody List<UsersDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository
                 .saveAll(
                     entities
@@ -186,27 +215,26 @@ public class UsersController {
                 .collect(Collectors.toList());
     }
 
-    //TODO: Put some logic about roles
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Save one Users`s entity to DB",
             httpMethod = "POST")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entity saved successfully.")
     })
-    @PostMapping("/post")
+    @PostMapping()
     public UsersDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
             @RequestBody UsersDTO entity) {
+        entity.setId(null);
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
-    //TODO: Put some logic for Roles
     @PreAuthorize(SecuredRoles.ALL)
     @ApiOperation(  value = "Update Users`s entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -217,28 +245,38 @@ public class UsersController {
                     response = UsersDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public UsersDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody UsersDTO entity) {
+            @RequestBody UsersDTO dto,
+            @RequestHeader("X-Auth-Token") String token) {
+        Users user = repository.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
+        if(user.getRole().getName().equals(SystemRoles.USER) && user.getId() != dto.getId()) throw new NoPermissionForThisOperationException();
         return mapper
-                .map(repository.saveAndFlush(mapper.map(entity)));
+                .map(repository.saveAndFlush(mapper.map(dto)));
     }
 
     @PreAuthorize(SecuredRoles.ALL)
     @ApiOperation(value = "Set flag DISABLED in entity in DB.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    //TODO: Check for ROLE_USER and allow to get information only for it ID.
-    @DeleteMapping("/disable")
+    @DeleteMapping()
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody int id){
+            @PathVariable int id,
+            @RequestHeader("X-Auth-Token") String token){
+        Users user = repository.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
+        if(user.getRole().getName().equals(SystemRoles.USER)&&user.getId()!=id) throw new NoPermissionForThisOperationException();
+        repository.findById(id).orElseThrow(()-> new NoSuchEntityException(id));
         repository.disableEntity(id);
     }
 
@@ -247,13 +285,16 @@ public class UsersController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Integer> idList){
+            @PathVariable List<Integer> idList){
+
         repository.disableEntities(idList);
     }
 }

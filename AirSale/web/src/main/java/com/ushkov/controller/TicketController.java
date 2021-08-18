@@ -1,13 +1,19 @@
 package com.ushkov.controller;
 
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Positive;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -23,30 +29,32 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ushkov.domain.CurrentFlight;
+import com.ushkov.domain.Discount;
 import com.ushkov.domain.Ticket;
 import com.ushkov.domain.TicketStatus;
-import com.ushkov.dto.CurrentFlightDTO;
-import com.ushkov.dto.PassportDTO;
+import com.ushkov.domain.Users;
 import com.ushkov.dto.TicketDTO;
-import com.ushkov.dto.TicketStatusDTO;
+import com.ushkov.exception.NoPermissionForThisOperationException;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.CurrentFlightMapper;
+import com.ushkov.mapper.DiscountMapper;
 import com.ushkov.mapper.PassportMapper;
 import com.ushkov.mapper.TicketMapper;
 import com.ushkov.mapper.TicketStatusMapper;
-import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
 import com.ushkov.repository.springdata.TicketRepositorySD;
-import com.ushkov.repository.springdata.TicketStatusRepositorySD;
+import com.ushkov.repository.springdata.UsersRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
-
-//TODO: Put some logic for Roles
+import com.ushkov.security.util.TokenUtils;
+import com.ushkov.utils.SystemRoles;
+import com.ushkov.validation.ValidationGroup;
 
 
 @Api(tags = "Ticket", value="The Ticket API", description = "The Ticket API")
@@ -58,12 +66,13 @@ import com.ushkov.security.util.SecuredRoles;
 public class TicketController {
 
     private final TicketRepositorySD repository;
-    private final CurrentFlightRepositorySD currentFlightRepositorySD;
-    private final TicketStatusRepositorySD ticketStatusRepositorySD;
+    private final UsersRepositorySD usersRepositorySD;
     private final TicketMapper mapper;
     private final PassportMapper passportMapper;
     private final CurrentFlightMapper currentFlightMapper;
     private final TicketStatusMapper ticketStatusMapper;
+    private final DiscountMapper discountMapper;
+    private final TokenUtils tokenUtils;
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(  value = "Find all not disabled Tickets entries from DB.",
@@ -83,44 +92,48 @@ public class TicketController {
         return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
     }
 
-    @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
+    @PreAuthorize(SecuredRoles.ALL)
     @ApiOperation(  value="Find Ticket entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
             httpMethod="GET")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    //TODO: Check for ROLE_USER and allow to get information only for it ID.
-    @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of Ticket entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query")
-    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
                     response = TicketDTO.class)
     })
-    @GetMapping("/id")
-    public TicketDTO findOne(@RequestParam("id") long id) {
-
+    @GetMapping("/{id}")
+    public TicketDTO findOne(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @ApiParam(
+                    value = "Id of Ticket entry.",
+                    required = true
+            )
+            @PathVariable
+                    long id,
+            @RequestHeader("X-Auth-Token") String token) {
+        Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
+        if(user.getRole().getName().equals(SystemRoles.USER)
+                && repository.findAllByUserId(user.getId()).stream().noneMatch(e->e.getId()==id))
+            throw new NoPermissionForThisOperationException();
         return mapper.map(repository.findById(id).orElseThrow(()-> new NoSuchEntityException(id, Ticket.class.getSimpleName())));
     }
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find all entities by passport entity.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    //TODO: Check for ROLE_USER and allow to get information only for it ID.
     @GetMapping("/findbypassport")
     public Page<TicketDTO> findByPassport(
+            @Valid
             @ApiParam(
                     name = "passport",
                     value = "Passport entity.",
                     required = true)
-            @RequestParam
-                    PassportDTO dto,
+            @PathVariable
+                    long dto,
             Pageable page) {
         return repository.findAllByPassport(passportMapper.map(dto), page).map(mapper::map);
     }
@@ -130,12 +143,13 @@ public class TicketController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbycurrentflight")
     public Page<TicketDTO> findByCurrentFlight(
+            @Valid
             @ApiParam(
                     name = "currentflight",
                     value = "CurrentFlight entity.",
                     required = true)
-            @RequestParam
-                    CurrentFlightDTO dto,
+            @PathVariable
+                    long dto,
             Pageable page) {
         return repository.findAllByCurrentFlight(currentFlightMapper.map(dto), page).map(mapper::map);
     }
@@ -145,14 +159,15 @@ public class TicketController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbyticketstatus")
     public Page<TicketDTO> findByTicketStatus(
+            @Valid
             @ApiParam(
                     name = "ticketstatus",
                     value = "TicketStatus entity.",
                     required = true)
-            @RequestParam
-                    TicketStatusDTO dto,
+            @PathVariable
+                    short ticketStatus,
             Pageable page) {
-        return repository.findAllByTicketStatus(ticketStatusMapper.map(dto), page).map(mapper::map);
+        return repository.findAllByTicketStatus(ticketStatusMapper.map(ticketStatus), page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
@@ -160,18 +175,20 @@ public class TicketController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @GetMapping("/findbycurrentflightandticketstatus")
     public Page<TicketDTO> findByCurrentFlightAndTicketStatus(
+            @Valid
             @ApiParam(
                     name = "currentflight",
-                    value = "CurrentFlight entity.",
+                    value = "ID of CurrentFlight entity.",
                     required = true)
-            @RequestParam
-                    CurrentFlightDTO currentFlightDTO,
+            @PathVariable
+                    long currentFlightDTO,
+            @Valid
             @ApiParam(
                     name = "ticketstatus",
-                    value = "TicketStatus entity.",
+                    value = "ID of TicketStatus entity.",
                     required = true)
-            @RequestParam
-                    TicketStatusDTO ticketStatusDTO,
+            @PathVariable
+                    short ticketStatusDTO,
             Pageable page) {
 
         return repository
@@ -196,6 +213,40 @@ public class TicketController {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
+    @PreAuthorize(SecuredRoles.ALL)
+    @ApiOperation(  value = "Get Price for ticket")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entries found successfully.")
+    })
+    @GetMapping("/price")
+    public BigDecimal getPrice(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @ApiParam(
+                    name = "currentflight",
+                    value = "ID of CurrentFlight.",
+                    required = true)
+            @PathVariable
+            long currentFlight,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
+            @ApiParam(
+                    name = "discount",
+                    value = "ID of Discount.",
+                    required = true)
+            @PathVariable
+                    short discount) {
+        //Primitive calculating of final price.
+        Discount discountM = discountMapper.map(discount);
+        CurrentFlight cf = currentFlightMapper.map(currentFlight);
+        return cf.getBasePrice().subtract(cf.getBasePrice().multiply(BigDecimal.valueOf(discountM.getValue()/100)));
+    }
+
     @ApiOperation(  value = "Save list of Ticket`s entities to DB",
             httpMethod = "POST")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
@@ -207,11 +258,14 @@ public class TicketController {
     @PostMapping("/postall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public List<TicketDTO> saveAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "entities",
                     value = "List of Ticket`s entities for update",
                     required = true)
             @RequestBody List<TicketDTO> entities) {
+        entities.forEach(e->e.setId(null));
         return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
                 .stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -227,11 +281,18 @@ public class TicketController {
     })
     @PostMapping()
     public TicketDTO saveOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for save",
                     required = true)
-            @RequestBody TicketDTO entity) {
+            @RequestBody TicketDTO entity,
+            @RequestHeader("X-Auth-Token") String token) {
+        entity.setId(null);
+        Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
+        if(user.getRole().getName().equals(SystemRoles.USER)) {
+            entity.setTicketStatus((short) 1);
+        }
         return mapper.map(repository.save(mapper.map(entity)));
     }
 
@@ -246,7 +307,9 @@ public class TicketController {
                     response = TicketDTO.class)
     })
     @PatchMapping()
+    @Validated(ValidationGroup.ExistingObject.class)
     public TicketDTO updateOne(
+            @Valid
             @ApiParam(
                     name = "entity",
                     value = "Entity for update",
@@ -266,24 +329,72 @@ public class TicketController {
     })
     @PatchMapping("/updateticketstatusbycurrentflight")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    @Validated(ValidationGroup.ExistingObject.class)
     public List<TicketDTO> updateStatusByCurrentFlight(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
             @ApiParam(
                     name = "currentflightid",
                     value = "ID of CurrentFlight for which necessary update status in al not disabled depended tickets.",
                     required = true)
             @RequestBody Long currentFlightId,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
+            @ApiParam(
+                    name = "ticketstatusid",
+                    value = "ID of TicketStaus which is necessary put in all not disabled Ticket`s entities, that depended of CurrentFlight.",
+                    required = true)
+            @RequestBody Short ticketStatusId) {
+        TicketStatus ticketStatus = ticketStatusMapper.map(ticketStatusId);
+        List<Ticket> ticketList = repository.findAllByCurrentFlightAndDisabledIsFalse(currentFlightMapper.map(currentFlightId));
+        if(ticketList.isEmpty()) throw new NoSuchEntityException("There are no not disabled ticket for CurrentFlight with ID " + currentFlightId);
+        ticketList.forEach(cfre -> cfre.setTicketStatus(ticketStatus));
+        return repository.saveAll(ticketList).stream().map(mapper::map).collect(Collectors.toList());
+    }
+
+    @PreAuthorize(SecuredRoles.ONLYADMINS)
+    @ApiOperation(  value = "Update All Ticket`s with corresponding statuses in DB by current flight.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Entities updated successfully.",
+                    response = TicketDTO.class)
+    })
+    @PatchMapping("/updateticketstatusbycurrentflight")
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
+    @Validated(ValidationGroup.ExistingObject.class)
+    public List<TicketDTO> updateStatusByCurrentFlightAndListOfStatus(
+            @Valid
+            @Min(1)
+            @Max(Long.MAX_VALUE)
+            @ApiParam(
+                    name = "currentflightid",
+                    value = "ID of CurrentFlight for which necessary update status in al not disabled depended tickets.",
+                    required = true)
+            @RequestBody Long currentFlightId,
+            @Valid
+            @Min(1)
+            @Max(Short.MAX_VALUE)
             @ApiParam(
                     name = "ticketstatusid",
                     value = "ID of TicketStaus which is necessary put in all not disabled Ticket`s entities, that depended of CurrentFlight.",
                     required = true)
             @RequestBody Short ticketStatusId,
-            Pageable page) {
-        TicketStatus ticketStatus = ticketStatusRepositorySD.findById(ticketStatusId).orElseThrow(()->new NoSuchEntityException(ticketStatusId, TicketStatus.class.getSimpleName()));
-        List<Ticket> ticketList = repository.findAllByCurrentFlightAndDisabledIsFalse(
-                currentFlightRepositorySD
-                        .findById(currentFlightId)
-                        .orElseThrow(()-> new NoSuchEntityException(currentFlightId, CurrentFlight.class.getSimpleName())));
-        if(ticketList.isEmpty()) throw new NoSuchEntityException("There are no not disabled ticket for CurrentFlight with ID " + currentFlightId);
+            @Valid
+            @NotEmpty
+            @ApiParam(
+                    name = "ticketstatusidforsearch",
+                    value = "ID of TicketStaus which is necessary put in all not disabled Ticket`s entities, that depended of CurrentFlight.",
+                    required = true)
+            @RequestBody List<Short> ticketStatusIdList
+            ) {
+        TicketStatus ticketStatus = ticketStatusMapper.map(ticketStatusId);
+        List<TicketStatus> ticketStatusList = ticketStatusIdList.stream().map(ticketStatusMapper::map).collect(Collectors.toList());
+        List<Ticket> ticketList = repository.findAllByTicketStatusesAndCurrentFlightAndDisableIsFalse(currentFlightId, ticketStatusList);
+        if(ticketList.isEmpty()) throw new NoSuchEntityException("There are no not disabled ticket for status update.");
         ticketList.forEach(cfre -> cfre.setTicketStatus(ticketStatus));
         return repository.saveAll(ticketList).stream().map(mapper::map).collect(Collectors.toList());
     }
@@ -294,11 +405,13 @@ public class TicketController {
     @DeleteMapping("/disable")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
     public void disableOne(
+            @Valid
+            @Positive
             @ApiParam(
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @RequestBody long id){
+            @PathVariable long id){
         repository.disableEntity(id);
     }
 
@@ -307,13 +420,15 @@ public class TicketController {
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @DeleteMapping("/disableall")
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.DEFAULT, rollbackFor = SQLException.class)
-    public void disableOne(
+    public void disableAll(
+            @Valid
+            @NotEmpty
             @ApiParam(
                     name = "listid",
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @RequestBody List<Long> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }
