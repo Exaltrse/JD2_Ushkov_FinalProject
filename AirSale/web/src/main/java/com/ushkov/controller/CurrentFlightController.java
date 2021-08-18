@@ -41,6 +41,8 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.CurrentFlightMapper;
 import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.utils.TimestampUtils;
+import com.ushkov.validation.TimestampException;
 import com.ushkov.validation.ValidationGroup;
 
 @Api(tags = "CurrentFlight", value="The CurrentFlight API", description = "The CurrentFlight API")
@@ -53,6 +55,7 @@ public class CurrentFlightController {
 
     private final CurrentFlightRepositorySD repository;
     private final CurrentFlightMapper mapper;
+
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disabled CurrentFlights entries from DB.",
@@ -136,10 +139,11 @@ public class CurrentFlightController {
             @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
+        if(departureBeginingDate.after(departureEndDate)) throw new TimestampException("departurebeginingdate", "departureenddate");
         return repository
                 .findAllByDepartureDateBetweenAndDisabledIsFalse(
-                        departureBeginingDate,
-                        departureEndDate,
+                        TimestampUtils.toBeginningOfDay(departureBeginingDate),
+                        TimestampUtils.toEndingOfDay(departureEndDate),
                         currentFlightStatus,
                         page
                 ).map(mapper::map);
@@ -170,10 +174,11 @@ public class CurrentFlightController {
             @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
+        if(arrivalBeginingDate.after(arrivalEndDate)) throw new TimestampException("arrivalbeginingdate", "arrivalenddate");
         return repository
                 .findAllByArrivalDateBetweenAndDisabledIsFalse(
-                        arrivalBeginingDate,
-                        arrivalEndDate,
+                        TimestampUtils.toBeginningOfDay(arrivalBeginingDate),
+                        TimestampUtils.toEndingOfDay(arrivalEndDate),
                         currentFlightStatus,
                         page
                 ).map(mapper::map);
@@ -222,9 +227,10 @@ public class CurrentFlightController {
             @RequestBody
                     Short currentFlightStatus,
             Pageable page) {
+        if(departureBeginingDate.after(departureEndDate)) throw new TimestampException("departurebeginingdate", "departureenddate");
         return repository.findAllByDepartureAndAirports(
-                departureBeginingDate,
-                departureEndDate,
+                TimestampUtils.toBeginningOfDay(departureBeginingDate),
+                TimestampUtils.toEndingOfDay(departureEndDate),
                 departureAirportId,
                 arrivalAirportId,
                 currentFlightStatus,

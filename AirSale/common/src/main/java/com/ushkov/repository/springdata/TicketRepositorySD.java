@@ -49,4 +49,9 @@ public interface TicketRepositorySD
             "(select psgrpas.passport from PassengerPassport as psgrpas where psgrpas.passenger in " +
             "(select up.passenger from UserPassenger as up where up.user = :id))")
     List<Ticket> findAllByUserId(@Param("id") Integer id);
+
+    @Query(value="select t from Ticket as t where t.currentFlight = :currentflightid and t.ticketStatus in :idlist")
+    List<Ticket> findAllByTicketStatusesAndCurrentFlightAndDisableIsFalse(
+            @Param("currentflightid") Long currentFlightId,
+            @Param("idlist") List<TicketStatus> ticketStatusList);
 }
