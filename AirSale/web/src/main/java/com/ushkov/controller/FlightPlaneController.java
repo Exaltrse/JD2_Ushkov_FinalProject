@@ -13,6 +13,7 @@ import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.Flight;
 import com.ushkov.domain.FlightPlane;
@@ -43,6 +45,7 @@ import com.ushkov.mapper.FlightPlaneMapper;
 import com.ushkov.repository.springdata.FlightPlaneRepositorySD;
 import com.ushkov.repository.springdata.FlightRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
+import com.ushkov.requests.FlightPlaneRequest;
 import com.ushkov.security.util.SecuredRoles;
 import com.ushkov.validation.ValidationGroup;
 
@@ -79,6 +82,7 @@ public class FlightPlaneController {
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value="Find FlightPlane entry from DB by ID.",
             notes = "Use ID param of entity for searching of entry in DB. Also search in disabled entities.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -94,7 +98,7 @@ public class FlightPlaneController {
                     value = "Id of FlightPlane entry.",
                     required = true)
             @PathVariable
-                    int id) {
+                    Long id) {
 
         return mapper.map(repository.findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, FlightPlane.class.getSimpleName())));
@@ -102,48 +106,55 @@ public class FlightPlaneController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find not disable entries from DB by id of flight and plane.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
-    @GetMapping("/findbyflightandplane")
+    @PostMapping("/findbyflightandplane")
     public Page<FlightPlaneDTO> findAllByFlightAndPlane(
-            @Valid
-            @Min(1)
-            @Max(Integer.MAX_VALUE)
             @ApiParam(
-                    name = "flightid",
-                    value = "ID of Flight.",
+                    value = "ID of plane and flight.",
                     required = true)
-            @PathVariable
-                    int flightId,
-            @Valid
-            @Min(1)
-            @Max(Integer.MAX_VALUE)
-            @ApiParam(
-                    name = "planeid",
-                    value = "ID of plane.",
-                    required = true)
-            @PathVariable
-                    int planeId,
-            Pageable page) {
-        Flight flight = flightRepositorySD.findById(flightId).orElseThrow(()->new NoSuchEntityException(flightId, Flight.class.getSimpleName()));
-        Plane plane = planeRepositorySD.findById(planeId).orElseThrow(()->new NoSuchEntityException(planeId, Plane.class.getSimpleName()));
+            @RequestBody
+                    FlightPlaneRequest request,
+            @ApiIgnore final Pageable page) {
+        Flight flight = flightRepositorySD.findById(request.getFlightId()).orElseThrow(()->new NoSuchEntityException(request.getFlightId(), Flight.class.getSimpleName()));
+        Plane plane = planeRepositorySD.findById(request.getPlaneId()).orElseThrow(()->new NoSuchEntityException(request.getPlaneId(), Plane.class.getSimpleName()));
         return repository.findByFlightAndPlaneAndDisabledIsFalse(flight, plane, page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<FlightPlaneDTO> findAll(Pageable page) {
+    public Page<FlightPlaneDTO> findAll(@ApiIgnore final Pageable page) {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
@@ -225,7 +236,7 @@ public class FlightPlaneController {
                     name = "id",
                     value = "ID of entity for disabling.",
                     required = true)
-            @PathVariable int id){
+            @PathVariable Long id){
         repository.disableEntity(id);
     }
 
@@ -242,7 +253,7 @@ public class FlightPlaneController {
                     value = "List of ID of entities for disabling.",
                     required = true
             )
-            @PathVariable List<Integer> idList){
+            @PathVariable List<Long> idList){
         repository.disableEntities(idList);
     }
 }

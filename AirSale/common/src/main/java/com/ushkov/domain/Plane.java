@@ -44,7 +44,7 @@ public class Plane {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @ManyToMany(mappedBy = "planes", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "planes", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("planes")
     private Set<Airline> airlines = Collections.emptySet();
 
@@ -53,12 +53,12 @@ public class Plane {
 //    private Set<Flight> flights = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "plane", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<PlaneSeats> planeSeats = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "plane", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "plane", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference
     private Set<FlightPlane> flightPlanes = Collections.emptySet();
 

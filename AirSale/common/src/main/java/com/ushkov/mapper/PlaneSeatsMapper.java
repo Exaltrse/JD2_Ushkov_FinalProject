@@ -24,7 +24,7 @@ public abstract class PlaneSeatsMapper {
     @Mapping(target = "seat", source = "seat.id")
     public abstract PlaneSeatsDTO map(PlaneSeats entity);
 
-    public PlaneSeats map(Integer id){
+    public PlaneSeats mapFromId(Integer id){
         return planeSeatsRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, PlaneSeats.class.getSimpleName()));

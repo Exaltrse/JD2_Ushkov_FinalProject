@@ -20,7 +20,7 @@ public abstract class PassengerPassportMapper {
 
     public abstract PassengerPassportDTO map(PassengerPassport entity);
 
-    public PassengerPassport map(Long id){
+    public PassengerPassport mapFromId(Long id){
         return passengerPassportRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, PassengerPassport.class.getSimpleName()));

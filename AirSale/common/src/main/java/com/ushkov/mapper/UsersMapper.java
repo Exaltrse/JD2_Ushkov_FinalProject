@@ -23,7 +23,7 @@ public abstract class UsersMapper {
     @Mapping(target = "role", source = "role.id")
     public abstract UsersDTO map(Users entity);
 
-    public Users map(Integer id){
+    public Users mapFromId(Integer id){
         return usersRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Users.class.getSimpleName()));

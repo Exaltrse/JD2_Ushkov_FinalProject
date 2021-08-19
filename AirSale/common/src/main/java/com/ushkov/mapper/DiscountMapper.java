@@ -22,7 +22,7 @@ public abstract class DiscountMapper {
 
     public abstract DiscountDTO map(Discount entity);
 
-    public Discount map(Short id){
+    public Discount mapFromId(Short id){
         return DiscountRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Discount.class.getSimpleName()));

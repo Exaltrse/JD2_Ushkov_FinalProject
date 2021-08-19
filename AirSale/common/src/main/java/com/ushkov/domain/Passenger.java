@@ -48,12 +48,12 @@ public class Passenger {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "passengers", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("passengers")
     private Set<Users> users = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @ManyToMany(mappedBy = "passengers", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "passengers", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("passengers")
     private Set<Passport> passports = Collections.emptySet();
 

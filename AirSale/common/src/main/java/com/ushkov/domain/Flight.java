@@ -60,12 +60,12 @@ public class Flight {
 //    private Set<Plane> planes = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "flight", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<CurrentFlight> currentFlights = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "flight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "flight", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<FlightPlane> flightPlanes = Collections.emptySet();
 }

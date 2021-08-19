@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.Users;
 import com.ushkov.dto.UsersDTO;
@@ -116,22 +117,42 @@ public class UsersController {
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<UsersDTO> findAll(Pageable page) {
+    public Page<UsersDTO> findAll(@ApiIgnore final Pageable page) {
 
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbyloginpart")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbyloginpart")
     public Page<UsersDTO> findByLoginpart(
             @Valid
             @NotEmpty
@@ -139,9 +160,9 @@ public class UsersController {
                     name = "login",
                     value = "String for searching by login.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     String login,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository.findAllByLoginIsContainingAndDisabledIsFalse(login, page).map(mapper::map);
     }
 
@@ -163,19 +184,28 @@ public class UsersController {
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find not disables entities by Roles.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbyroles")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbyroles")
     public Page<UsersDTO> findAllByRole(
             @Valid
             @Min(1)
             @Max(Short.MAX_VALUE)
             @ApiParam(
-                    name = "role",
                     value = "ID of role.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     short roleId,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository
                 .findAllByRole(
                         roleRepository
@@ -216,8 +246,7 @@ public class UsersController {
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
-    @ApiOperation(  value = "Save one Users`s entity to DB",
-            httpMethod = "POST")
+    @ApiOperation(  value = "Save one Users`s entity to DB")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -249,7 +278,6 @@ public class UsersController {
     public UsersDTO updateOne(
             @Valid
             @ApiParam(
-                    name = "entity",
                     value = "Entity for update",
                     required = true)
             @RequestBody UsersDTO dto,

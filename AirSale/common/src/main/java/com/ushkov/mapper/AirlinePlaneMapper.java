@@ -19,7 +19,7 @@ public abstract class AirlinePlaneMapper {
 
     public abstract AirlinePlaneDTO map(AirlinePlane entity);
 
-    public AirlinePlane map(Long id){
+    public AirlinePlane mapFromId(Long id){
         return airlinePlaneRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, AirlinePlane.class.getSimpleName()));

@@ -3,7 +3,7 @@ package com.ushkov.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
+@ResponseStatus(HttpStatus.CONFLICT)
 public class ExistingEntityException extends RuntimeException {
     public ExistingEntityException() {
         super();

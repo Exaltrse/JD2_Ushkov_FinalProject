@@ -32,4 +32,5 @@ public interface PlaneRepositorySD
 
     Page<Plane> findAllByAircraftNumberIsContainingAndDisabledIsFalse(String name, Pageable page);
 
+   Plane findByAircraftNumber(String aircraftnumber);
 }

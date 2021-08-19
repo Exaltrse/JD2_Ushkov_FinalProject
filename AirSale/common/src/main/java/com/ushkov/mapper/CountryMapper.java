@@ -21,7 +21,7 @@ public abstract class CountryMapper {
 
     public abstract CountryDTO map(Country entity);
 
-    public Country map(Short id){
+    public Country mapFromId(Short id){
         return countryRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Country.class.getSimpleName()));

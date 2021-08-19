@@ -38,7 +38,7 @@ public class CurrentFlightStatus {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "currentFlightsStatus", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "currentFlightsStatus", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<CurrentFlight> currentFlights = Collections.emptySet();
 }

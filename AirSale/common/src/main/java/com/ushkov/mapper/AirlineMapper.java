@@ -22,7 +22,7 @@ public abstract class AirlineMapper {
 
     public abstract AirlineDTO map(Airline entity);
 
-    public Airline map(Short id){
+    public Airline mapFromId(Short id){
         return airlineRepositorySD
                 .findById(id)
                 .orElseThrow(()-> new NoSuchEntityException(id, Airline.class.getSimpleName()));

@@ -1,9 +1,13 @@
 package com.ushkov.exception;
 
+import java.time.LocalDateTime;
+
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
+import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,6 +20,9 @@ import com.ushkov.validation.Violation;
 
 @ControllerAdvice
 public class ErrorHandlingControllerAdvice {
+
+    private static final Logger log = Logger.getLogger(ErrorHandlingControllerAdvice.class);
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
@@ -26,6 +33,7 @@ public class ErrorHandlingControllerAdvice {
             error.getViolations().add(
                     new Violation(violation.getPropertyPath().toString(), violation.getMessage()));
         }
+        log.warn(error);
         return error;
     }
 
@@ -39,9 +47,18 @@ public class ErrorHandlingControllerAdvice {
             error.getViolations().add(
                     new Violation(fieldError.getField(), fieldError.getDefaultMessage()));
         }
+        log.warn(error);
         return error;
     }
 
 
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ExceptionResponse> handleOthersException(Exception e) {
+        /* Handles all other exceptions. Status code 500. */
+        log.error(e.getMessage(), e);
+        log.info(e.getMessage(), e);
+        return new ResponseEntity<>(new ExceptionResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), LocalDateTime.now()),
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

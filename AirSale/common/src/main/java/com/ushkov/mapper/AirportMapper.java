@@ -23,7 +23,7 @@ public abstract class AirportMapper {
 
     public abstract AirportDTO map(Airport entity);
 
-    public Airport map(Short id){
+    public Airport mapFromId(Short id){
         return airportRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Airport.class.getSimpleName()));

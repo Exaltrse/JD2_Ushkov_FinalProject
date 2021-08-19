@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.AirlinePlane;
 import com.ushkov.dto.AirlinePlaneDTO;
@@ -42,6 +43,7 @@ import com.ushkov.mapper.AirlinePlaneMapper;
 import com.ushkov.repository.springdata.AirlinePlaneRepositorySD;
 import com.ushkov.repository.springdata.AirlineRepositorySD;
 import com.ushkov.repository.springdata.PlaneRepositorySD;
+import com.ushkov.requests.AirlinePlaneRequest;
 import com.ushkov.security.util.SecuredRoles;
 import com.ushkov.validation.ValidationGroup;
 
@@ -60,8 +62,7 @@ public class AirlinePlaneController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disabled AirlinePlanes entries from DB.",
-            notes = "Find all not disabled AirlinePlanes entries from DB.",
-            httpMethod = "GET")
+            notes = "Find all not disabled AirlinePlanes entries from DB.")
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
@@ -76,16 +77,8 @@ public class AirlinePlaneController {
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
-    @ApiOperation(  value="Find AirlinePlane entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+    @ApiOperation(  value="Find AirlinePlane entry from DB by ID.")
     @ApiImplicitParams({
-            @ApiImplicitParam(
-                    name = "id",
-                    value = "Id of AirlinePlane entry.",
-                    required = true,
-                    dataType = "string",
-                    paramType = "query"),
             @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     })
     @ApiResponses({
@@ -99,7 +92,12 @@ public class AirlinePlaneController {
             @Valid
             @Min(1)
             @Max(Long.MAX_VALUE)
-            @PathVariable
+            @ApiParam(
+                    name = "id",
+                    value = "Id of AirlinePlane entry.",
+                    required = true
+            )
+            @PathVariable("id")
                     Long id) {
 
         return mapper.map(repository.findById(id)
@@ -108,48 +106,49 @@ public class AirlinePlaneController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
-    @GetMapping("/page")
-    public Page<AirlinePlaneDTO> findAll(Pageable page) {
+    @PostMapping("/page")
+    public Page<AirlinePlaneDTO> findAll(@ApiIgnore final Pageable page) {
 
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find not disable entries from DB by id of airline and plane.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
-    @GetMapping("/findbyairlineandplane")
+    @PostMapping("/findbyairlineandplane")
     public List<AirlinePlaneDTO> findAllByAirlineAndPlane(
             @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
             @ApiParam(
-                    name = "airlineid",
-                    value = "ID of Airlines.",
-                    required = true)
-            @PathVariable
-            short airlineId,
-            @Valid
-            @Min(1)
-            @Max(Integer.MAX_VALUE)
-            @ApiParam(
-                    name = "planeid",
+                    name = "airlineplane",
                     value = "ID of plane.",
                     required = true)
-            @PathVariable
-            int planeId) {
+            @RequestBody
+                    AirlinePlaneRequest airlinePlaneRequest) {
         return repository
-                .findByAirlineAndPlaneAndDisabledIsFalse(airlineId, planeId)
+                .findByAirlineAndPlaneAndDisabledIsFalse(airlinePlaneRequest.getAirline(), airlinePlaneRequest.getPlane())
                 .stream()
                 .map(mapper::map)
                 .collect(Collectors.toList());

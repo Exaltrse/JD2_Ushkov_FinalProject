@@ -15,6 +15,7 @@ import javax.validation.constraints.Size;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.Airline;
 import com.ushkov.dto.AirlineDTO;
@@ -79,8 +81,7 @@ public class AirlineController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find Airline entry from DB by ID.",
-                    notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-                    httpMethod="GET")
+                    notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -89,13 +90,11 @@ public class AirlineController {
     })
     @GetMapping("/{id}")
     public AirlineDTO findOne(
-            @ApiParam(value = "Id of airline entry.", required = true)
             @Valid
             @Min(1)
             @Max(value = Short.MAX_VALUE, message = "Max value is " + Short.MAX_VALUE)
-            @PathVariable
-                    Short id) {
-
+            @ApiParam(value = "Id of airline entry.", required = true)
+            @PathVariable Short id) {
         return mapper.map(
                 repository.findById(id)
                         .orElseThrow(
@@ -104,13 +103,23 @@ public class AirlineController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<AirlineDTO> findAll(Pageable page) {
+    public Page<AirlineDTO> findAll(@ApiIgnore final Pageable page) {
 
         return repository
                 .findAllByDisabledIsFalse(page)
@@ -119,7 +128,17 @@ public class AirlineController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
-    @GetMapping("/findbyname")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbyname")
     public Page<AirlineDTO> findByName(
             @ApiParam(
                     name = "name",
@@ -127,9 +146,9 @@ public class AirlineController {
                     required = true)
             @Valid
             @NotBlank
-            @PathVariable
+            @RequestBody
             String name,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository
                 .findAllByNameIsContainingAndDisabledIsFalse(name, page)
                 .map(mapper::map);
@@ -137,7 +156,17 @@ public class AirlineController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by shortname or part of shortname.")
-    @GetMapping("/findbyshortname")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbyshortname")
     public Page<AirlineDTO> findByShortname(
             @ApiParam(
                     name = "name",
@@ -145,9 +174,9 @@ public class AirlineController {
                     required = true)
             @Valid
             @Size(min = 1, max = 3, message = "Length of short name of airline must be between 2 and 3 chars.")
-            @PathVariable
+            @RequestBody
             String name,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository
                 .findAllByShortNameIsContainingAndDisabledIsFalse(name, page)
                 .map(mapper::map);
@@ -155,7 +184,17 @@ public class AirlineController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by planes.")
-    @GetMapping("/findbyplanes")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbyplanes")
     public Page<AirlineDTO> findByPlanes(
             @ApiParam(
                     name = "planeidlist",
@@ -163,11 +202,9 @@ public class AirlineController {
                     required = true)
             @Valid
             @NotEmpty(message = "You must fill List with at least one element.")
-            @Max(Integer.MAX_VALUE)
-            @Min(1)
-            @PathVariable
+            @RequestBody
             List<Integer> planeIdList,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         planeIdList.forEach(planeRepositorySD::findById);
         return repository
                 .findAllByPlaneAndDisabledIsFalse(planeIdList, page)

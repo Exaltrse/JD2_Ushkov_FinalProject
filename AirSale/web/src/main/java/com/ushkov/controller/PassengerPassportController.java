@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.PassengerPassport;
 import com.ushkov.dto.PassengerPassportDTO;
@@ -101,14 +102,24 @@ public class PassengerPassportController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<PassengerPassportDTO> findAll(Pageable page) {
+    public Page<PassengerPassportDTO> findAll(@ApiIgnore final Pageable page) {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 

@@ -31,7 +31,7 @@ public abstract class FlightMapper {
     @Mapping(target = "destination", source = "destination.id")
     public abstract FlightDTO map(Flight entity);
 
-    public Flight map(Integer id){
+    public Flight mapFromId(Integer id){
         return FlightRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Flight.class.getSimpleName()));

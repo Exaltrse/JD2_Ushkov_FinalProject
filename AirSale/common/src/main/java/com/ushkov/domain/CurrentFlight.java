@@ -59,7 +59,7 @@ public class CurrentFlight {
     private Flight flight;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "currentFlight", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "currentFlight", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 

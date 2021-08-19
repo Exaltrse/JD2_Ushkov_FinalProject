@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.ushkov.domain.CurrentFlight;
 import com.ushkov.domain.Passport;
+import com.ushkov.domain.PlaneSeats;
 import com.ushkov.domain.Ticket;
 import com.ushkov.domain.TicketStatus;
 
@@ -54,4 +55,22 @@ public interface TicketRepositorySD
     List<Ticket> findAllByTicketStatusesAndCurrentFlightAndDisableIsFalse(
             @Param("currentflightid") Long currentFlightId,
             @Param("idlist") List<TicketStatus> ticketStatusList);
+
+    @Query(value = "select count(t) from Ticket as t where " +
+            "t.currentFlight = :currentflight " +
+            "and t.seat = :planeseat " +
+            "and t.ticketStatus in :ticketsstatuslist " +
+            "and t.disabled = false")
+    Short countSoldSeatsByCurrentFlightTicketStatusesAndPlaneSeat(
+            @Param("currentflight") CurrentFlight currentFlight,
+            @Param("ticketsstatuslist") List<TicketStatus> ticketsStatusList,
+            @Param("planeseat") PlaneSeats planeSeat);
+
+    @Query(value = "select count(t) from Ticket as t where " +
+            "t.currentFlight = :currentflight " +
+            "and t.ticketStatus in :ticketsstatuslist " +
+            "and t.disabled = false")
+    Short countSoldSeatsByCurrentFlightTicketStatuses(
+            @Param("currentflight") CurrentFlight currentFlight,
+            @Param("ticketsstatuslist") List<TicketStatus> ticketsStatusList);
 }

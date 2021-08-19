@@ -15,18 +15,18 @@ import com.ushkov.domain.FlightPlane;
 import com.ushkov.domain.Plane;
 
 public interface FlightPlaneRepositorySD
-        extends CrudRepository<FlightPlane, Integer>,
-        PagingAndSortingRepository<FlightPlane, Integer>,
-        JpaRepository<FlightPlane, Integer> {
+        extends CrudRepository<FlightPlane, Long>,
+        PagingAndSortingRepository<FlightPlane, Long>,
+        JpaRepository<FlightPlane, Long> {
 
     //delete operations
     @Modifying(flushAutomatically = true)
     @Query(value = "update FlightPlane as a set a.disabled = true where a.id = :id")
-    int disableEntity(int id);
+    int disableEntity(long id);
 
     @Modifying(flushAutomatically = true)
     @Query(value = "update FlightPlane as a set a.disabled = true where a.id in :idList")
-    int disableEntities(List<Integer> idList);
+    int disableEntities(List<Long> idList);
 
     Page<FlightPlane> findAllByDisabledIsFalse(Pageable page);
 
