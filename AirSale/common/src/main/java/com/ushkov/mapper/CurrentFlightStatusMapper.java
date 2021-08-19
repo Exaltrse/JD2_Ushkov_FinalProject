@@ -22,7 +22,7 @@ public abstract class CurrentFlightStatusMapper {
 
     public abstract CurrentFlightStatusDTO map(CurrentFlightStatus entity);
 
-    public CurrentFlightStatus map(Short id){
+    public CurrentFlightStatus mapFromId(Short id){
         return currentFlightStatusRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, CurrentFlightStatus.class.getSimpleName()));

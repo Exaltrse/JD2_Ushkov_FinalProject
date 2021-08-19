@@ -23,6 +23,10 @@ spring:
     #  autoconfigure:
     #    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 
+hibernate:
+  cache:
+    provider_class: net.sf.ehcache.hibernate.SingletonEhCacheProvider
+    use_second_level_cache: true
 
 server:
   port: 8080

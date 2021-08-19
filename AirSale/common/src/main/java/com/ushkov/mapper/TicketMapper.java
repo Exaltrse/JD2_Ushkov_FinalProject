@@ -34,7 +34,7 @@ public abstract class TicketMapper {
     @Mapping(target = "seat", source = "seat.id")
     public abstract TicketDTO map(Ticket entity);
 
-    public Ticket map(Long id){
+    public Ticket mapFromId(Long id){
         return ticketRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Ticket.class.getSimpleName()));

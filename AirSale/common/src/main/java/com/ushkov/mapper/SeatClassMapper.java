@@ -22,7 +22,7 @@ public abstract class SeatClassMapper {
 
     public abstract SeatClassDTO map(SeatClass entity);
 
-    public SeatClass map(Short id){
+    public SeatClass mapFromId(Short id){
         return seatClassRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, SeatClass.class.getSimpleName()));

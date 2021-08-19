@@ -13,6 +13,7 @@ import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.PassengerClass;
 import com.ushkov.dto.PassengerClassDTO;
@@ -72,8 +74,7 @@ public class PassengerClassController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find PassengerClass entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -98,29 +99,48 @@ public class PassengerClassController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<PassengerClassDTO> findAll(Pageable page) {
+    public Page<PassengerClassDTO> findAll(@ApiIgnore final Pageable page) {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
-    @GetMapping("/findbyname")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbyname")
     public Page<PassengerClassDTO> findByName(
             @Valid
             @NotEmpty
             @ApiParam(
-                    name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     String name,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository.findAllByNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
     }
 

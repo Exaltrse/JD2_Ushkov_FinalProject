@@ -1,7 +1,7 @@
 package com.ushkov.dto;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -13,7 +13,6 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import com.ushkov.validation.ValidationGroup.ExistingObject;
 import com.ushkov.validation.ValidationGroup.NewObject;
@@ -21,7 +20,7 @@ import com.ushkov.validation.ValidationGroup.NewObject;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode
-@Validated
+//@Validated
 @ApiModel(description = "Entity, that represent Current FLight.")
 public class CurrentFlightDTO {
     @ApiModelProperty(
@@ -63,14 +62,14 @@ public class CurrentFlightDTO {
             required = true,
             position = 3)
     @NotNull(message = "Date of departure of CurrentFlight entity can`t be NULL.")
-    private Timestamp departureDate;
+    private ZonedDateTime departureDate;
 
     @ApiModelProperty(
             value = "Date and time of arrival in TIMESTAMP format.",
             required = true,
             position = 4)
     @NotNull(message = "Date of arrival of CurrentFlight entity can`t be NULL.")
-    private Timestamp arrivalDate;
+    private ZonedDateTime arrivalDate;
 
     @ApiModelProperty(
             value = "Base Price of CurrentFlight. Using for calculating final price.",

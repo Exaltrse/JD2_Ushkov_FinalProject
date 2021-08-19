@@ -38,7 +38,7 @@ public class SeatClass {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "seat", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "seat", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<PlaneSeats> planeSeats = Collections.emptySet();
 }

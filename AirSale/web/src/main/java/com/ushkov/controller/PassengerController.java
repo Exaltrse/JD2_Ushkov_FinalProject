@@ -13,6 +13,7 @@ import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.Passenger;
 import com.ushkov.domain.Users;
@@ -43,6 +45,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.PassengerMapper;
 import com.ushkov.repository.springdata.PassengerRepositorySD;
 import com.ushkov.repository.springdata.UsersRepositorySD;
+import com.ushkov.requests.NameLastNameRequest;
 import com.ushkov.security.util.SecuredRoles;
 import com.ushkov.security.util.TokenUtils;
 import com.ushkov.utils.SystemRoles;
@@ -83,8 +86,7 @@ public class PassengerController {
 
     @PreAuthorize(SecuredRoles.ALL)
     @ApiOperation(  value="Find Passenger entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
@@ -113,33 +115,51 @@ public class PassengerController {
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find not disables entities by name or part of name.")
-    @GetMapping("/findbyname")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbyname")
     public Page<PassengerDTO> findByName(
             @Valid
             @NotEmpty
             @ApiParam(
-                    name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     String name,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository.findAllByFirstNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find not disables entities by lastname or part of lastname.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbylastname")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbylastname")
     public Page<PassengerDTO> findByLastname(
             @Valid
             @NotEmpty
             @ApiParam(
-                    name = "name",
                     value = "String for searching by name.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     String name,
             Pageable page) {
         return repository.findAllByLastNameIsContainingAndDisabledIsFalse(name, page).map(mapper::map);
@@ -147,44 +167,53 @@ public class PassengerController {
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find not disables entities by firstname and lastname or part of it.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbyfirstandlastname")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbyfirstandlastname")
     public Page<PassengerDTO> findByFirstAndLastname(
-            @Valid
-            @NotEmpty
             @ApiParam(
-                    name = "firstname",
-                    value = "String for searching by firstname.",
+                    value = "Full name for searching.",
                     required = true)
-            @PathVariable
-                    String firstName,
-            @Valid
-            @NotEmpty
-            @ApiParam(
-                    name = "lastname",
-                    value = "String for searching by lastname.",
-                    required = true)
-            @PathVariable
-                    String lastName,
-            Pageable page) {
+            @RequestBody
+                    NameLastNameRequest request,
+            @ApiIgnore final Pageable page) {
         return repository
-                .findByFirstNameIsContainingAndLastNameIsContainingAndDisabledIsFalse(firstName, lastName, page)
+                .findByFirstNameIsContainingAndLastNameIsContainingAndDisabledIsFalse(request.getFirstName(), request.getLastName(), page)
                 .map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(value = "Find passengers by user.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
-    @GetMapping("/findbyuser")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
+    @PostMapping("/findbyuser")
     public Page<PassengerDTO> findAllPassengersByUser(
             @Valid
             @ApiParam(
                     name = "user",
                     value = "User entity to search for dependent passenger entities.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     Integer id,
-            Pageable page,
+            @ApiIgnore final Pageable page,
             @RequestHeader("X-Auth-Token") String token){
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
         if(user.getRole().getName().equals(SystemRoles.USER)
@@ -197,14 +226,24 @@ public class PassengerController {
 
     @PreAuthorize(SecuredRoles.ALLEXCEPTUSER)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
-    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<PassengerDTO> findAll(Pageable page) {
+    public Page<PassengerDTO> findAll(@ApiIgnore final Pageable page) {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 

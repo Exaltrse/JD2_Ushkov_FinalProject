@@ -1,6 +1,6 @@
 package com.ushkov.domain;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 import java.util.Collections;
 import java.util.Set;
 
@@ -46,7 +46,7 @@ public class Passport {
     @Column(name = "series", length = 12, nullable = false)
     private String series;
     @Column(name = "expire_date", nullable = false)
-    private Timestamp expireDate;
+    private Date expireDate;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "citizenship", nullable = false)
     @JsonManagedReference
@@ -55,7 +55,7 @@ public class Passport {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable( name = "passenger_passport",
             joinColumns = @JoinColumn(name = "passport"),
             inverseJoinColumns = @JoinColumn(name = "passenger"))
@@ -63,7 +63,7 @@ public class Passport {
     private Set<Passenger> passengers = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "passport", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "passport", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 }

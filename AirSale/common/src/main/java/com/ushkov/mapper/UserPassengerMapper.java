@@ -20,7 +20,7 @@ public abstract class UserPassengerMapper {
 
     public abstract UserPassengerDTO map(UserPassenger entity);
 
-    public UserPassenger map(Long id){
+    public UserPassenger mapFromId(Long id){
         return userPassengerRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, UserPassenger.class.getSimpleName()));

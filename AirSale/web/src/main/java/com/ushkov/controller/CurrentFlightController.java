@@ -4,16 +4,17 @@ package com.ushkov.controller;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -34,13 +35,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.CurrentFlight;
 import com.ushkov.dto.CurrentFlightDTO;
+import com.ushkov.dto.PlaneSeatsSmallDTO;
 import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.CurrentFlightMapper;
+import com.ushkov.mapper.TimestampMapper;
 import com.ushkov.repository.springdata.CurrentFlightRepositorySD;
+import com.ushkov.requests.CurrentFLightSaveOneRequest;
+import com.ushkov.requests.CurrentFlightFindOneRequest;
+import com.ushkov.requests.CurrentFlightSearchingByTimeAndStatusRequest;
+import com.ushkov.requests.CurrentFlightSearchingWithAirportsRequest;
 import com.ushkov.security.util.SecuredRoles;
+import com.ushkov.service.CurrentFlightService;
 import com.ushkov.utils.TimestampUtils;
 import com.ushkov.validation.TimestampException;
 import com.ushkov.validation.ValidationGroup;
@@ -55,6 +64,8 @@ public class CurrentFlightController {
 
     private final CurrentFlightRepositorySD repository;
     private final CurrentFlightMapper mapper;
+    private final CurrentFlightService currentFlightService;
+    private final TimestampMapper timestampMapper;
 
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
@@ -69,178 +80,193 @@ public class CurrentFlightController {
                     responseContainer="List")
     })
     @GetMapping
-    public List<CurrentFlightDTO> findAll() {
+    public List<CurrentFlightDTO> findAll(
+            @Valid
+            @NotEmpty
+            @ApiParam(
+                    value = "Client`s TimeZone.",
+                    required = true
+            )
+            @PathVariable String timezoneid) {
 
-        return repository.findAllByDisabledIsFalse().stream().map(mapper::map).collect(Collectors.toList());
+        return repository.findAllByDisabledIsFalse()
+                .stream().map(e -> mapper.mapFrom(e, TimeZone.getTimeZone(timezoneid))).collect(Collectors.toList());
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find CurrentFlight entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entry found successfully.",
                     response = CurrentFlightDTO.class)
     })
-    @GetMapping("/{id}")
+    @PostMapping("/{id}")
     public CurrentFlightDTO findOne(
-            @Valid
-            @Min(1)
-            @Max(Long.MAX_VALUE)
             @ApiParam(
-                    value = "Id of CurrentFlight entry.",
-                    required = true)
-            @PathVariable
-                    Long id) {
+                    value = "Current flight ID with Client`s TimeZone.",
+                    required = true
+            )
+            @RequestBody CurrentFlightFindOneRequest currentFlightFindOneRequest) {
 
-        return mapper.map(
+        return mapper.mapFrom(
                 repository
-                        .findById(id)
-                        .orElseThrow(()-> new NoSuchEntityException(id, CurrentFlight.class.getSimpleName())));
+                        .findById(currentFlightFindOneRequest.getId())
+                        .orElseThrow(()-> new NoSuchEntityException(currentFlightFindOneRequest.getId(), CurrentFlight.class.getSimpleName())),
+                TimeZone.getTimeZone(currentFlightFindOneRequest.getTimezoneid()));
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
-    @GetMapping("/page")
-    public Page<CurrentFlightDTO> findAll(Pageable page) {
+    @PostMapping("/page")
+    public Page<CurrentFlightDTO> findAll(
+            @ApiParam(
+                    value = "Client`s TimeZone.",
+                    required = true
+            )
+            @RequestBody String timezoneid,
+            @ApiIgnore final Pageable page) {
 
-        return repository.findAllByDisabledIsFalse(page).map(mapper::map);
+        return repository.findAllByDisabledIsFalse(page).map(e->mapper.mapFrom(e, TimeZone.getTimeZone(timezoneid)));
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @PostMapping("/findbydeparture")
     public Page<CurrentFlightDTO> findByDeparture(
             @ApiParam(
-                    name = "departurebeginingdate",
-                    value = "Timestamp of departure. From what timestamp is searching.",
-                    required = true)
-            @RequestBody
-                    Timestamp departureBeginingDate,
-            @ApiParam(
-                    name = "departureenddate",
-                    value = "Timestamp of departure. To what timestamp is searching.",
-                    required = true)
-            @RequestBody
-                    Timestamp departureEndDate,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "status",
-                    value = "ID of status of Current Flight.")
-            @RequestBody
-                    Short currentFlightStatus,
-            Pageable page) {
-        if(departureBeginingDate.after(departureEndDate)) throw new TimestampException("departurebeginingdate", "departureenddate");
+                    value = "Request for searching by date/time and status.",
+                    required = true
+            )
+            @RequestBody CurrentFlightSearchingByTimeAndStatusRequest request,
+            @ApiIgnore final Pageable page) {
+        Timestamp beginning = timestampMapper.doMap(request.getBeginingDate());
+        Timestamp ending = timestampMapper.doMap(request.getEndDate());
+        if(beginning.after(ending)) throw new TimestampException("departurebeginingdate", "departureenddate");
         return repository
                 .findAllByDepartureDateBetweenAndDisabledIsFalse(
-                        TimestampUtils.toBeginningOfDay(departureBeginingDate),
-                        TimestampUtils.toEndingOfDay(departureEndDate),
-                        currentFlightStatus,
+                        TimestampUtils.toBeginningOfDay(beginning),
+                        TimestampUtils.toEndingOfDay(ending),
+                        request.getCurrentFlightStatus(),
                         page
-                ).map(mapper::map);
+                ).map(e -> mapper.mapFrom(e, TimeZone.getTimeZone(request.getTimezoneid())));
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by arrival date.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @PostMapping("/findbyarrival")
     public Page<CurrentFlightDTO> findByArrival(
             @ApiParam(
-                    name = "arrivalbeginingdate",
-                    value = "Timestamp of arrival. From what timestamp is searching.",
-                    required = true)
-            @RequestBody
-                    Timestamp arrivalBeginingDate,
-            @ApiParam(
-                    name = "arrivalenddate",
-                    value = "Timestamp of arrival. To what timestamp is searching.",
-                    required = true)
-            @RequestBody
-                    Timestamp arrivalEndDate,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "status",
-                    value = "ID of status of Current Flight.")
-            @RequestBody
-                    Short currentFlightStatus,
-            Pageable page) {
-        if(arrivalBeginingDate.after(arrivalEndDate)) throw new TimestampException("arrivalbeginingdate", "arrivalenddate");
+                    value = "Request for searching by date/time and status.",
+                    required = true
+            )
+            @RequestBody CurrentFlightSearchingByTimeAndStatusRequest request,
+            @ApiIgnore final Pageable page) {
+        Timestamp beginning = timestampMapper.doMap(request.getBeginingDate());
+        Timestamp ending = timestampMapper.doMap(request.getEndDate());
+        if(beginning.after(ending)) throw new TimestampException("arrivalbeginingdate", "arrivalenddate");
         return repository
                 .findAllByArrivalDateBetweenAndDisabledIsFalse(
-                        TimestampUtils.toBeginningOfDay(arrivalBeginingDate),
-                        TimestampUtils.toEndingOfDay(arrivalEndDate),
-                        currentFlightStatus,
+                        TimestampUtils.toBeginningOfDay(beginning),
+                        TimestampUtils.toEndingOfDay(ending),
+                        request.getCurrentFlightStatus(),
                         page
-                ).map(mapper::map);
+                ).map(e -> mapper.mapFrom(e, TimeZone.getTimeZone(request.getTimezoneid())));
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by departure date and Airports of departure and arrival.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @PostMapping("/findbyarrivalandairports")
     public Page<CurrentFlightDTO> findByDepartureAndAirports(
             @ApiParam(
-                    name = "departurebeginingdate",
-                    value = "Timestamp of departure. From what timestamp is searching.",
+                    value = "",
                     required = true)
             @RequestBody
-                    Timestamp departureBeginingDate,
-            @ApiParam(
-                    name = "departureenddate",
-                    value = "Timestamp of departure. To what timestamp is searching.",
-                    required = true)
-            @RequestBody
-                    Timestamp departureEndDate,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "departureairportid",
-                    value = "ID of departure airport",
-                    required = true)
-            @RequestBody
-                    Short departureAirportId,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "arrivalairportid",
-                    value = "ID of arrival airport.",
-                    required = true)
-            @RequestBody
-                    Short arrivalAirportId,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "status",
-                    value = "ID of status of Current Flight.")
-            @RequestBody
-                    Short currentFlightStatus,
-            Pageable page) {
-        if(departureBeginingDate.after(departureEndDate)) throw new TimestampException("departurebeginingdate", "departureenddate");
+                    CurrentFlightSearchingWithAirportsRequest request,
+            @ApiIgnore final Pageable page) {
+        Timestamp beginning = timestampMapper.doMap(request.getBeginingDate());
+        Timestamp ending = timestampMapper.doMap(request.getEndDate());
+        if(beginning.after(ending)) throw new TimestampException("departurebeginingdate", "departureenddate");
         return repository.findAllByDepartureAndAirports(
-                TimestampUtils.toBeginningOfDay(departureBeginingDate),
-                TimestampUtils.toEndingOfDay(departureEndDate),
-                departureAirportId,
-                arrivalAirportId,
-                currentFlightStatus,
+                TimestampUtils.toBeginningOfDay(beginning),
+                TimestampUtils.toEndingOfDay(ending),
+                request.getDepartureAirportId(),
+                request.getArrivalAirportId(),
+                request.getCurrentFlightStatus(),
                 page
-        ).map(mapper::map);
+        ).map(e -> mapper.mapFrom(e, TimeZone.getTimeZone(request.getTimezoneid())));
+    }
+
+    @PreAuthorize(SecuredRoles.ALL)
+    @ApiOperation(  value = "Get info about free seats.",
+            notes = "Get information about free seats in List of PlaneSeatsSmallDTO, " +
+                    "that represent fre seats by seat class.")
+    @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    @ApiResponses({
+            @ApiResponse(
+                    code = 200,
+                    message = "Calculating ended successfully.")
+    })
+    @PostMapping("/calculatefreeseats")
+    public List<PlaneSeatsSmallDTO> getFreeSeats(
+            @Valid
+            @Min(1)
+            @ApiParam(
+                    name = "currentflightid",
+                    value = "ID of Current Flight for calculating.")
+            @RequestBody
+            Long currentFlightId){
+        return currentFlightService.getActualSeatsByCurrentFlight(currentFlightId);
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
-    @ApiOperation(  value = "Save list of CurrentFlight`s entities to DB",
-            httpMethod = "POST")
+    @ApiOperation(  value = "Save list of CurrentFlight`s entities to DB")
     @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
     @ApiResponses({
             @ApiResponse(
@@ -256,10 +282,19 @@ public class CurrentFlightController {
                     name = "entities",
                     value = "List of CurrentFlight`s entities for update",
                     required = true)
-            @RequestBody List<CurrentFlightDTO> entities) {
-        entities.forEach(e->e.setId(null));
-        return repository.saveAll(entities.stream().map(mapper::map).collect(Collectors.toList()))
-                .stream().map(mapper::map).collect(Collectors.toList());
+            @RequestBody List<CurrentFlightDTO> entities,
+            @Valid
+            @NotEmpty
+            @ApiParam(
+                    value = "Client`s TimeZone.",
+                    required = true
+            )
+            @RequestBody String timezoneid) {
+        entities.forEach(e->{
+            e.setId(null);
+            e.setCurrentFlightsStatus((short) 1);});
+        return repository.saveAll(entities.stream().map(e-> mapper.mapTo(e)).collect(Collectors.toList()))
+                .stream().map(e -> mapper.mapFrom(e, TimeZone.getTimeZone(timezoneid))).collect(Collectors.toList());
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
@@ -276,11 +311,12 @@ public class CurrentFlightController {
             @Valid
             @ApiParam(
                     name = "entity",
-                    value = "Entity for save",
+                    value = "Entity for update",
                     required = true)
-            @RequestBody CurrentFlightDTO entity) {
-        entity.setId(null);
-        return mapper.map(repository.save(mapper.map(entity)));
+            @RequestBody CurrentFLightSaveOneRequest entity) {
+        entity.getEntity().setId(null);
+        entity.getEntity().setCurrentFlightsStatus((short) 1);
+        return mapper.mapFrom(repository.save(mapper.mapTo(entity.getEntity())), TimeZone.getTimeZone(entity.getTimezoneid()));
     }
 
     @PreAuthorize(SecuredRoles.SUPERADMIN)
@@ -301,8 +337,8 @@ public class CurrentFlightController {
                     name = "entity",
                     value = "Entity for update",
                     required = true)
-            @RequestBody CurrentFlightDTO entity) {
-        return mapper.map(repository.saveAndFlush(mapper.map(entity)));
+            @RequestBody CurrentFLightSaveOneRequest entity) {
+        return mapper.mapFrom(repository.saveAndFlush(mapper.mapTo(entity.getEntity())), TimeZone.getTimeZone(entity.getTimezoneid()));
     }
 
     @PreAuthorize(SecuredRoles.SUPERADMIN)

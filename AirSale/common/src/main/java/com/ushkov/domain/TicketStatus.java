@@ -38,7 +38,7 @@ public class TicketStatus {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "ticketStatus", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "ticketStatus", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<Ticket> tickets = Collections.emptySet();
 }

@@ -25,7 +25,7 @@ public abstract class PassengerMapper {
     @Mapping(target = "passengerClass", source = "passengerClass.id")
     public abstract PassengerDTO map(Passenger entity);
 
-    public Passenger map(Long id){
+    public Passenger mapFromId(Long id){
         return passengerRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Passenger.class.getSimpleName()));

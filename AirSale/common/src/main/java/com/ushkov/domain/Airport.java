@@ -41,12 +41,12 @@ public class Airport {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "departure", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "departure", fetch = FetchType.LAZY)
     @JsonBackReference
     Set<Flight> departure = Collections.emptySet();
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "destination", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY)
     @JsonBackReference
     Set<Flight> destination = Collections.emptySet();
 

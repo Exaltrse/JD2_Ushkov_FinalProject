@@ -38,7 +38,7 @@ public class Country {
     private boolean disabled;
 
     @NotFound(action = NotFoundAction.IGNORE)
-    @OneToMany(mappedBy = "citizenship", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "citizenship", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonBackReference
     private Set<Passport> passports = Collections.emptySet();
 

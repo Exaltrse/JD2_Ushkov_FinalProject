@@ -22,7 +22,7 @@ public abstract class RoleMapper {
 
     public abstract RoleDTO map(Role entity);
 
-    public Role map(Short id){
+    public Role mapFromId(Short id){
         return roleRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Role.class.getSimpleName()));

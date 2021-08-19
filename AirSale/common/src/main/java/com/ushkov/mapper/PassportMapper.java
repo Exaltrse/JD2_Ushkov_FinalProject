@@ -11,7 +11,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.repository.springdata.PassportRepositorySD;
 
 @Component
-@Mapper(componentModel = "spring", uses = {CountryMapper.class})
+@Mapper(componentModel = "spring", uses = {CountryMapper.class, DateMapper.class})
 public abstract class PassportMapper {
 
     @Autowired
@@ -24,7 +24,7 @@ public abstract class PassportMapper {
     @Mapping(target = "citizenship", source = "citizenship.id")
     public abstract PassportDTO map(Passport entity);
 
-    public Passport map(Long id){
+    public Passport mapFromId(Long id){
         return passportRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Passport.class.getSimpleName()));

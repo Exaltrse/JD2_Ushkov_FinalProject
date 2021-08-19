@@ -13,6 +13,7 @@ import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.UserPassenger;
 import com.ushkov.dto.UserPassengerDTO;
@@ -55,8 +57,10 @@ public class UserPassengerController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disabled UserPassengers entries from DB.",
-            notes = "Find all not disabled UserPassengers entries from DB.",
-            httpMethod = "GET")
+            notes = "Find all not disabled UserPassengers entries from DB.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses(value = {
             @ApiResponse(
                     code = 200,
@@ -72,8 +76,10 @@ public class UserPassengerController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value="Find UserPassenger entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -98,19 +104,33 @@ public class UserPassengerController {
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported."),
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<UserPassengerDTO> findAll(Pageable page) {
+    public Page<UserPassengerDTO> findAll(@ApiIgnore final Pageable page) {
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save list of UserPassenger`s entities to DB",
             httpMethod = "POST")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -134,6 +154,9 @@ public class UserPassengerController {
     @PreAuthorize(SecuredRoles.ONLYADMINS)
     @ApiOperation(  value = "Save one UserPassenger`s entity to DB",
             httpMethod = "POST")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -152,8 +175,10 @@ public class UserPassengerController {
     }
 
     @PreAuthorize(SecuredRoles.SUPERADMIN)
-    @ApiOperation(  value = "Update UserPassenger`s entity in DB.",
-            httpMethod = "PUT")
+    @ApiOperation(  value = "Update UserPassenger`s entity in DB.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "X-Auth-Token", value = "token", required = true, dataType = "string", paramType = "header")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,

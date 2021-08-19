@@ -211,7 +211,7 @@ public class PassportController {
             Pageable page,
             @RequestHeader("X-Auth-Token") String token){
         Users user = usersRepositorySD.findById(tokenUtils.getIdFromToken(token)).orElseThrow(NoSuchEntityException::new);
-        Passenger entity = passengerMapper.map(passenger.getId());
+        Passenger entity = passengerMapper.mapFromId(passenger.getId());
         if(user.getRole().getName().equals(SystemRoles.USER) && !user.getPassengers().contains(entity)){
              throw new NoPermissionForThisOperationException();
         }

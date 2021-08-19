@@ -22,7 +22,7 @@ public abstract class PassengerClassMapper {
 
     public abstract PassengerClassDTO map(PassengerClass entity);
 
-    public PassengerClass map(Short id){
+    public PassengerClass mapFromId(Short id){
         return passengerClassRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, PassengerClass.class.getSimpleName()));

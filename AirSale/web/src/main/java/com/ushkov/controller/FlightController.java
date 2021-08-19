@@ -13,6 +13,7 @@ import javax.validation.constraints.Positive;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import com.ushkov.domain.Airport;
 import com.ushkov.domain.Flight;
@@ -41,6 +43,7 @@ import com.ushkov.exception.NoSuchEntityException;
 import com.ushkov.mapper.FlightMapper;
 import com.ushkov.repository.springdata.AirportRepositorySD;
 import com.ushkov.repository.springdata.FlightRepositorySD;
+import com.ushkov.requests.FlightByAirportsRequest;
 import com.ushkov.security.util.SecuredRoles;
 import com.ushkov.validation.ValidationGroup;
 
@@ -75,8 +78,7 @@ public class FlightController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value="Find Flight entry from DB by ID.",
-            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.",
-            httpMethod="GET")
+            notes = "Use ID param of entity for searching of entry in DB. lso search in disabled entities.")
     @ApiResponses({
             @ApiResponse(
                     code = 200,
@@ -100,20 +102,40 @@ public class FlightController {
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(  value = "Find all not disables entries from DB with pagination.")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
     @ApiResponses({
             @ApiResponse(
                     code = 200,
                     message = "Entries found successfully.")
     })
     @GetMapping("/page")
-    public Page<FlightDTO> findAll(Pageable page) {
+    public Page<FlightDTO> findAll(@ApiIgnore final Pageable page) {
 
         return repository.findAllByDisabledIsFalse(page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by flightnumber or part of it.")
-    @GetMapping("/findbyflightnumber")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbyflightnumber")
     public Page<FlightDTO> findByFlightNumber(
             @Valid
             @NotEmpty
@@ -121,39 +143,37 @@ public class FlightController {
                     name = "name",
                     value = "String for searching by flightnumber.",
                     required = true)
-            @PathVariable
+            @RequestBody
                     String flightnumber,
-            Pageable page) {
+            @ApiIgnore final Pageable page) {
         return repository.findAllByNumberIsContainingAndDisabledIsFalse(flightnumber, page).map(mapper::map);
     }
 
     @PreAuthorize(SecuredRoles.WITHOUTAUTHENTICATION)
     @ApiOperation(value = "Find not disables entities by airport of departure and arrival.")
-    @GetMapping("/findbydepartureandarrival")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
+                    value = "Results page you want to retrieve (0..N)"),
+            @ApiImplicitParam(name = "size", dataType = "integer", paramType = "query",
+                    value = "Number of records per page."),
+            @ApiImplicitParam(name = "sort", allowMultiple = true, dataType = "string", paramType = "query",
+                    value = "Sorting criteria in the format: property(,asc|desc). " +
+                            "Default sort order is ascending. " +
+                            "Multiple sort criteria are supported.")
+    })
+    @PostMapping("/findbydepartureandarrival")
     public Page<FlightDTO> findByDepartureAndArrival(
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
             @ApiParam(
-                    name = "departure",
-                    value = "ID of airport of departure for searching.",
+
+                    value = "ID of airports.",
                     required = true)
-            @PathVariable
-                    short departureAirportId,
-            @Valid
-            @Min(1)
-            @Max(Short.MAX_VALUE)
-            @ApiParam(
-                    name = "arrival",
-                    value = "ID of airport of arrival for searching.",
-                    required = true)
-            @PathVariable
-                    short arrivalAirportId,
-            Pageable page) {
-        Airport departureAirport = airportRepositorySD.findById(departureAirportId)
-                .orElseThrow(()->new NoSuchEntityException(departureAirportId, Airport.class.getSimpleName()));
-        Airport arrivalAirport = airportRepositorySD.findById(departureAirportId)
-                .orElseThrow(()->new NoSuchEntityException(arrivalAirportId, Airport.class.getSimpleName()));
+            @RequestBody
+                    FlightByAirportsRequest request,
+            @ApiIgnore final Pageable page) {
+        Airport departureAirport = airportRepositorySD.findById(request.getDepartureAirportId())
+                .orElseThrow(()->new NoSuchEntityException(request.getDepartureAirportId(), Airport.class.getSimpleName()));
+        Airport arrivalAirport = airportRepositorySD.findById(request.getArrivalAirportId())
+                .orElseThrow(()->new NoSuchEntityException(request.getArrivalAirportId(), Airport.class.getSimpleName()));
         return repository
                 .findAllByDepartureAndDestinationAndDisabledIsFalse(departureAirport, arrivalAirport, page)
                 .map(mapper::map);

@@ -22,7 +22,7 @@ public abstract class TicketStatusMapper {
 
     public abstract TicketStatusDTO map(TicketStatus entity);
 
-    public TicketStatus map(Short id){
+    public TicketStatus mapFromId(Short id){
         return ticketStatusRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, TicketStatus.class.getSimpleName()));

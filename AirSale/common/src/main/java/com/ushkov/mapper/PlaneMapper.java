@@ -24,7 +24,7 @@ public abstract class PlaneMapper {
 
     public abstract PlaneDTO map(Plane entity);
 
-    public Plane map(Integer id){
+    public Plane mapFromId(Integer id){
         return planeRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, Plane.class.getSimpleName()));

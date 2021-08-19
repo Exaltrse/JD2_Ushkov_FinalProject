@@ -29,7 +29,7 @@ public abstract class FlightPlaneMapper {
     @Mapping(target = "plane", source = "plane.id")
     public abstract FlightPlaneDTO map(FlightPlane entity);
 
-    public FlightPlane map(Integer id){
+    public FlightPlane mapFromId(Long id){
         return flightPlaneRepositorySD
                 .findById(id)
                 .orElseThrow(()->new NoSuchEntityException(id, FlightPlane.class.getSimpleName()));
